@@ -1,0 +1,25 @@
+[tool.poetry]
+version = "1.0.0"
+description = "Application to manage dentist office"
+authors = ["Błażej Naziemiec <blazej.naziemiec@gmail.com>"]
+license = "MIT license"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+Django = "^5.2.2"
+psycopg2 = "2.9.6"
+gunicorn = "20.1.0"
+uvicorn = "^0.32.1"
+django_extensions = "^3.2.3"
+django-environ = "^0.11.2"
+ipython = "^8.18.1"
+whitenoise = "^6.8.0"
+pip = "^24.2"
+pillow = "^11.2.1"
+beautifulsoup4 = "^4.13.4"
+django-formtools = "^2.5.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

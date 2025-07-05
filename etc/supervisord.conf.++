@@ -1,0 +1,11 @@
+[program:++APPNAME++-++ENV++]
+user=++APPUSER++
+directory=++PRJDIR++
+
+command=++PRJDIR++/bin/app
+
+autostart=true
+autorestart=true
+
+stderr_logfile=++LOGDIR++/supervisor.err.log
+stdout_logfile=++LOGDIR++/supervisor.out.log

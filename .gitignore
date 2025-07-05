@@ -205,3 +205,15 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Own files to ignore
+.env
+.env.local
+*.pyc
+__pycache__/
+docker-compose.yml
+storage/
+.idea/
+etc/nginx/cert/
+etc/nginx/ssl-*.pem
+*.pem
