@@ -217,3 +217,4 @@ storage/
 etc/nginx/cert/
 etc/nginx/ssl-*.pem
 *.pem
+venv/
