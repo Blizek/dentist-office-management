@@ -79,7 +79,7 @@ class AttachmentEntity(models.Model):
             return attachment_info
 
 class Metrics(models.Model):
-    """Model to describe all possible type of metrics"""
+    """Model to describe all possible types of metrics"""
     MEASUREMENT_TYPES = (
         (1, "Length"),
         (2, "Weight"),
