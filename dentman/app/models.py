@@ -77,3 +77,22 @@ class AttachmentEntity(models.Model):
             return f"{attachment_info} for {object_representation}"
         else:
             return attachment_info
+
+class Metrics(models.Model):
+    """Model to describe all possible type of metrics"""
+    MEASUREMENT_TYPES = (
+        (1, "Length"),
+        (2, "Weight"),
+        (3, "Amount"),
+    )
+
+    measurement_type = models.PositiveSmallIntegerField("Measurement type", choices=MEASUREMENT_TYPES, null=False, blank=False)
+    measurement_name = models.CharField("Measurement name", max_length=100, null=False, blank=False)
+    measurement_name_shortcut = models.CharField("Measurement name shortcut", max_length=10, null=False, blank=False)
+
+    class Meta:
+        verbose_name = "Metric"
+        verbose_name_plural = "Metrics"
+
+    def __str__(self):
+        return f"Metric for {self.get_measurement_type_display()} - {self.measurement_name} ({self.measurement_name_shortcut})"

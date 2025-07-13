@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 
-from dentman.app.models import Attachment, AttachmentEntity
+from dentman.app.models import Attachment, AttachmentEntity, Metrics
 from dentman.app.forms import AttachmentAdminForm
 
 User = get_user_model()
@@ -52,3 +52,9 @@ class AttachmentAdmin(admin.ModelAdmin):
 @admin.register(AttachmentEntity)
 class AttachmentEntityAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(Metrics)
+class MetricsAdmin(admin.ModelAdmin):
+    def has_delete_permission(self, request, obj=None):
+        return False
+
