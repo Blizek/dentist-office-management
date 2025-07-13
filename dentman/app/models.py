@@ -22,8 +22,8 @@ def get_upload_path(instance, filename):
     return f"{instance.__class__.__name__}/{d}/{filename}"
 
 
-# User model class
 class User(AbstractUser):
+    """User model class"""
     phone_number = models.CharField("Phone number", max_length=20, blank=True, null=True)
     profile_photo = models.ImageField("Profile photo", upload_to=get_upload_path, storage=storage, blank=True, null=True)
     is_patient = models.BooleanField("Is patient", default=True)
@@ -35,8 +35,8 @@ class User(AbstractUser):
         if self.profile_photo:
             self.profile_photo.delete()
 
-# Attachment model class
 class Attachment(models.Model):
+    """Attachment model class"""
     file = models.FileField("File", upload_to=get_upload_path, storage=storage, blank=False, null=False, validators=[file_extension_validator])
     is_active = models.BooleanField("Is active", default=True)
     additional_info = models.TextField("Additional information", blank=True, null=True)
@@ -52,8 +52,8 @@ class Attachment(models.Model):
         if self.file:
             self.file.delete()
 
-# ManyToMany model between attachments and another models
 class AttachmentEntity(models.Model):
+    """ManyToMany model between attachments and another models"""
     attachment = models.ForeignKey(Attachment, on_delete=models.CASCADE, verbose_name="Attachment", null=False, blank=False)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, verbose_name="Content type", null=False, blank=False)
     object_id = models.PositiveIntegerField(verbose_name="Object ID", null=False, blank=False)
