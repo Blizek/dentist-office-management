@@ -23,7 +23,7 @@ class DotEnv(environ.Env):
     def __getattr__(self, name):
         val = os.getenv(name)
         if val is None:
-            raise SystemError(f"Zmienna {name} nie zdefiniowana w {ENV_FILE}")
+            raise SystemError(f"Variable {name} not defined in {ENV_FILE}")
         return val
 
 env = DotEnv()
@@ -31,13 +31,13 @@ env.read_env(ENV_FILE)
 
 
 
-ENV = env.ENV  # środowisko uruchomieniowe: 'dev', 'test', 'prod'
+ENV = env.ENV
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY", default="Zmienne środowiskowe nie zostały ustawione!")
+SECRET_KEY = env("SECRET_KEY", default="Environment variables not defined!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=True)
@@ -131,7 +131,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'pl-PL'
+LANGUAGE_CODE = 'en-US'
 
 TIME_ZONE = 'Europe/Warsaw'
 
@@ -150,7 +150,7 @@ STATICFILES_DIRS = [ROOT_DIR / "static"]
 MEDIA_URL = 'm/'
 MEDIA_ROOT = ROOT_DIR / 'pub/m/'
 
-STORAGE_URL = 'storage/'
+STORAGE_URL = '/storage/'
 STORAGE_ROOT = ROOT_DIR / 'storage/'
 
 
