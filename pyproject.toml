@@ -20,6 +20,7 @@ pip = "^24.2"
 pillow = "^11.2.1"
 beautifulsoup4 = "^4.13.4"
 django-formtools = "^2.5.1"
+psycopg2-binary = "^2.9.10"
 
 [build-system]
 requires = ["poetry-core"]
