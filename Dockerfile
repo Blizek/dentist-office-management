@@ -1,7 +1,7 @@
 # pull official base image
 FROM python:3.12-slim-bookworm
-ARG APP_UID
-ARG APP_GID
+ARG APP_UID=1001
+ARG APP_GID=1001
 ARG APP_USER
 # set work directory
 WORKDIR /app
