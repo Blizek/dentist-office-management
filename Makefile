@@ -6,8 +6,8 @@ APP_NAME     := $(APP_NAME_ENV)
 APP_PORT     := $(APP_PORT_ENV)
 APP_HOST	 := app
 DOMAIN 		 := $(DOMAIN_ENV)
-UID          := 1001
-GID          := 1001
+UID          := $(shell id -u)
+GID          := $(shell id -g)
 USER         := $(shell id -n -u)
 ENV          := $(ENV_ENV)
 DEBUG        := $(DEBUG_ENV)
@@ -124,29 +124,27 @@ server {
     proxy_read_timeout 300s;
 
     location / {
-    	try_files $uri @app;
+    	try_files $$uri @app;
     }
 
     location @app {
-		proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+        proxy_set_header Host $$http_host;
         proxy_redirect off;
         proxy_pass http://${APP_HOST}:${APP_PORT};
     }
     listen 443 ssl; # managed by Certbot
-    ssl_certificate ${ETCDIR}/cert/nginx/${DOMAIN}/${DOMAIN}.pem; # managed by Certbot
-    ssl_certificate_key ${ETCDIR}/cert/nginx/${DOMAIN}/${DOMAIN}-key.pem; # managed by Certbot
-    include ${ETCDIR}/nginx/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam ${ETCDIR}/nginx/ssl-dhparams.pem; # managed by Certbot
+    ssl_certificate ${ETCDIR}/cert/${DOMAIN}/fullchain.pem; # managed by Certbot
+    ssl_certificate_key ${ETCDIR}/cert/${DOMAIN}/privkey.pem; # managed by Certbot
+    include ${ETCDIR}/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam ${ETCDIR}/ssl-dhparams.pem; # managed by Certbot
 
     client_max_body_size 10M;
 }
 
 server {
-    if ($host = ${DOMAIN}) {
-        return 301 https://$host$request_uri;
+    if ($$host = ${DOMAIN}) {
+        return 301 https://$$host$$request_uri;
     } # managed by Certbot
 
 

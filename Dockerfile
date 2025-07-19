@@ -1,7 +1,7 @@
 # pull official base image
 FROM python:3.12-slim-bookworm
-ARG APP_UID=1001
-ARG APP_GID=1001
+ARG APP_UID
+ARG APP_GID
 ARG APP_USER
 # set work directory
 WORKDIR /app
@@ -14,8 +14,8 @@ ENV PYTHONUNBUFFERED 1
 RUN apt-get update && apt-get install -y netcat-openbsd libpq-dev build-essential libglib2.0-0 libpangocairo-1.0-0
 RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN /usr/local/bin/pip install poetry
-RUN groupadd --gid ${APP_GID} ${APP_USER}
-RUN useradd -rm -d /home/${APP_USER} -s /bin/bash -g ${APP_USER} -u ${APP_UID} ${APP_USER}
+RUN groupadd ${APP_USER}
+RUN useradd -m -s /bin/bash -g ${APP_USER} ${APP_USER}
 
 COPY . .
 RUN /bin/true\
