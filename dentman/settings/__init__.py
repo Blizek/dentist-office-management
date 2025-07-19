@@ -30,7 +30,6 @@ env = DotEnv()
 env.read_env(ENV_FILE)
 
 
-
 ENV = env.ENV
 
 # Quick-start development settings - unsuitable for production
@@ -64,6 +63,7 @@ INSTALLED_APPS = [
     'formtools',
 
     'dentman.app',
+    'dentman.ops',
 ]
 
 MIDDLEWARE = [

@@ -21,6 +21,7 @@ pillow = "^11.2.1"
 beautifulsoup4 = "^4.13.4"
 django-formtools = "^2.5.1"
 psycopg2-binary = "^2.9.10"
+django-tinymce = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]

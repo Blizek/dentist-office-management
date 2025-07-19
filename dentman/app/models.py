@@ -1,4 +1,3 @@
-import re
 import os
 
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -9,17 +8,10 @@ from django.contrib.auth.models import AbstractUser
 from django.apps import apps
 
 from dentman.storage import CustomFileSystemStorage
+from dentman.utils import get_upload_path
 
 storage = CustomFileSystemStorage()
 file_extension_validator = FileExtensionValidator(['pdf', 'jpg', 'png', 'mp4'])
-
-def get_upload_path(instance, filename):
-    instance_id = instance.id or 'temp'
-    if isinstance(instance_id, int):
-        d = "/".join(re.findall("..", f"{instance_id:04d}"))
-    else:
-        d = 'temp'
-    return f"{instance.__class__.__name__}/{d}/{filename}"
 
 
 class User(AbstractUser):
@@ -28,6 +20,7 @@ class User(AbstractUser):
     profile_photo = models.ImageField("Profile photo", upload_to=get_upload_path, storage=storage, blank=True, null=True)
     is_patient = models.BooleanField("Is patient", default=True)
     is_worker = models.BooleanField("Is worker", default=False)
+    is_dentist = models.BooleanField("Is dentist", default=False)
     is_dev = models.BooleanField("Is developer", default=False)
     additional_info = models.TextField("Additional information", blank=True, null=True)
 
