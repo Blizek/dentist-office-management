@@ -12,11 +12,61 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(VisitStatus)
 class VisitStatusAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('name', 'is_booked', 'is_postponed', 'is_in_progress', 'is_finished', 'is_resigned_by_patient',
+                    'is_resigned_by_dentist', 'is_resigned_by_office',)
+    fieldsets = [
+        (
+            '', {
+                'fields': ('name', ),
+            }
+        ), (
+            'Booking', {
+                'fields': ('is_booked', 'is_postponed', )
+            }
+        ), (
+            "Visit's status", {
+                'fields': ('is_in_progress', 'is_finished', )
+            }
+        ), (
+            "Resignations", {
+                'fields': ('is_resigned_by_patient', 'is_resigned_by_dentist', 'is_resigned_by_office', )
+            }
+        ), (
+            'Additional information', {
+                'fields': ('additional_info', )
+            }
+        )
+    ]
 
 @admin.register(Discount)
 class DiscountAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('name', 'percent', 'discount_type', 'is_currently_valid', 'is_limited', 'limit_value', 'used_counter', )
+    readonly_fields = ('used_counter', 'why_invalid_summary', 'is_currently_valid', )
+    search_fields = ('name', 'percent', 'discount_type', )
+    list_filter = ('discount_type', 'is_limited', )
+    fieldsets = (
+        (
+            '', {
+                'fields': ('name', 'description', 'percent', 'discount_type', 'promotion_code', )
+            }
+        ), (
+            'Is valid', {
+                'fields': ('is_currently_valid', 'why_invalid_summary', )
+            }       
+        ), (
+            'Valid dates', {
+                'fields': ('valid_since', 'valid_to', )
+            }
+        ), (
+            'Limits', {
+                'fields': ('is_limited', 'limit_value', 'used_counter', )
+            }
+        ), (
+            'Additional information', {
+                'fields': ('additional_info', )
+            }
+        )   
+    )
 
 @admin.register(Visit)
 class VisitAdmin(admin.ModelAdmin):
@@ -25,7 +75,7 @@ class VisitAdmin(admin.ModelAdmin):
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     list_display = ('title', 'slug', 'created_by', 'visit_counter',)
-    search_fields = ('title', 'slug')
+    search_fields = ('title', 'slug', 'created_by__first_name',)
     fieldsets = (
         (
             '', {
