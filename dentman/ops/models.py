@@ -1,4 +1,5 @@
 import uuid
+import os
 
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -105,7 +106,7 @@ class Post(CreatedUpdatedMixin):
     title = models.CharField("Title", max_length=500, unique=True)
     slug = models.SlugField("Slug", max_length=500, unique=True)
     main_photo = models.ImageField("Main photo", help_text="Main photo that will show up on the lists of posts and the main photo at the post",
-                                   upload_to=get_upload_path, storage=storage, null=True, blank=True)
+                                   upload_to=get_upload_path, storage=storage, null=True)
     text_html = HTMLField("Text html", help_text="Blog's text written in HTML format")
     visit_counter = models.IntegerField("Visit counter", default=0)
 
@@ -115,4 +116,20 @@ class Post(CreatedUpdatedMixin):
 
     def __str__(self):
         return f"Post {self.title}"
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            actual_photo = Post.objects.get(pk=self.pk).main_photo
+            if self.main_photo != actual_photo:
+                self.delete_old_file(actual_photo)
+        super().save(*args, **kwargs)
+
+    def delete_main_photo(self):
+        if self.main_photo:
+            self.main_photo.delete()
+
+    def delete_old_file(self, old_file):
+        if old_file.name != "":
+            os.remove(str(storage.base_location) + f"/{old_file.name}")
+
 

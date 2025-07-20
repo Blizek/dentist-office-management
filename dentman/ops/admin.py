@@ -24,4 +24,28 @@ class VisitAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('title', 'slug', 'created_by', 'visit_counter',)
+    search_fields = ('title', 'slug')
+    fieldsets = (
+        (
+            '', {
+                'fields': ('title', 'slug',)
+            }
+        ), (
+            "Blog's content", {
+                'fields': ('main_photo', 'text_html',)
+            }
+        ), (
+            "Blog's statistics", {
+                'fields': ('visit_counter', 'created_by', 'created_at', 'updated_by', 'updated_at',)
+             }
+        )
+    )
+    readonly_fields = ('visit_counter', 'created_by', 'created_at', 'updated_by', 'updated_at',)
+    prepopulated_fields = {'slug': ('title',)}
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.created_by = request.user
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)

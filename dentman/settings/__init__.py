@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
     'formtools',
+    'tinymce',
 
     'dentman.app',
     'dentman.ops',

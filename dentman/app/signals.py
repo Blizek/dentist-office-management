@@ -3,7 +3,8 @@ import os
 from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
 
-from .models import *
+from dentman.app.models import User, Attachment
+from dentman.utils import get_upload_path
 
 @receiver(post_save, sender=User)
 def move_profile_photo(sender, instance, created, **kwargs):
