@@ -1,9 +1,9 @@
 import os
 
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.dispatch import receiver
 
-from dentman.ops.models import Post
+from dentman.ops.models import Post, Visit
 from dentman.utils import get_upload_path
 
 @receiver(post_save, sender=Post)
@@ -22,3 +22,9 @@ def move_main_photo(sender, instance, created, **kwargs):
 @receiver(pre_delete, sender=Post)
 def delete_main_photo(sender, instance, **kwargs):
     instance.delete_main_photo()
+
+@receiver(m2m_changed, sender=Visit.discounts.through)
+def calculate_final_price(sender, instance, action, **kwargs):
+    if action in ["post_add", "post_remove", "post_clear"]:
+        instance.calculate_final_price()
+        instance.save(update_fields=['final_price'])

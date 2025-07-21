@@ -70,7 +70,35 @@ class DiscountAdmin(admin.ModelAdmin):
 
 @admin.register(Visit)
 class VisitAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('eid', 'patient', 'visit_status', 'scheduled_from', 'final_price')
+    list_filter = ('visit_status', 'dentists')
+    filter_horizontal = ('dentists', 'discounts')
+    readonly_fields = ('final_price', 'eid')
+    search_fields = ('eid', )
+    fieldsets = (
+        (
+            '', {
+                'fields': ('eid', 'patient', 'dentists')
+            }
+        ), (
+            'Date and time', {
+                'fields': ('scheduled_from', 'scheduled_to', 'starting_time', 'ending_time')
+            }
+        ), (
+            "Visit's information", {
+                'fields': ('visit_status', 'visit_description')
+            }
+        ), (
+            'Price and discounts', {
+                'fields': ('price', 'discounts', 'final_price')
+            }
+        ), (
+            'Additional information', {
+                'fields': ('additional_info', )
+            }
+        )
+    )
+
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):

@@ -1,6 +1,7 @@
 import uuid
 import os
 import datetime
+from decimal import Decimal
 
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -128,13 +129,15 @@ class Visit(CreatedUpdatedMixin):
     dentists = models.ManyToManyField(User, verbose_name="Dentists", limit_choices_to={'is_dentist': True}, related_name="dentists")
     scheduled_from = models.DateTimeField("Scheduled from")
     scheduled_to = models.DateTimeField("Scheduled to")
-    starting_time = models.DateTimeField("Visit starting time")
-    ending_time = models.DateTimeField("Visit ending time")
-    visit_description = models.TextField("Visit description")
+    starting_time = models.DateTimeField("Visit starting time", blank=True, null=True)
+    ending_time = models.DateTimeField("Visit ending time", blank=True, null=True)
+    visit_description = models.TextField("Visit description", blank=True, null=True)
     visit_status = models.ForeignKey(VisitStatus, verbose_name="Visit's status", on_delete=models.SET_NULL, null=True)
-    additional_info = models.TextField("Additional information")
+    additional_info = models.TextField("Additional information", blank=True, null=True)
     price = models.DecimalField("Price", max_digits=10, decimal_places=2)
     discounts = models.ManyToManyField(Discount, verbose_name="Discounts", related_name="discounts")
+    final_price = models.DecimalField("Final price", max_digits=10, decimal_places=2, default=0.0,
+                                      help_text="Final price of service including discounts")
 
     class Meta:
         verbose_name = "visit"
@@ -142,6 +145,16 @@ class Visit(CreatedUpdatedMixin):
 
     def __str__(self):
         return f"Visit {self.patient.get_full_name()} at {self.scheduled_from}"
+
+    def calculate_final_price(self):
+        current_final_price = self.price
+
+        for discount in self.discounts.all():
+            decimal_discount_percent = Decimal(discount.percent)
+            multiplier = Decimal(1) - decimal_discount_percent / Decimal(100)
+            current_final_price *= multiplier
+
+        self.final_price = current_final_price
 
 class Post(CreatedUpdatedMixin):
     title = models.CharField("Title", max_length=500, unique=True)

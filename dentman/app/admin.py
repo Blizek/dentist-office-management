@@ -12,15 +12,15 @@ User = get_user_model()
 class UserAdmin(BaseUserAdmin):
     model = User
 
-    list_display = ('username', 'email', 'first_name', 'last_name', 'phone_number', 'is_active', 'is_patient', 'is_worker')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'phone_number', 'is_active', 'is_patient', 'is_worker', 'is_dentist')
     search_fields = ('username', 'email', 'first_name', 'last_name', 'phone_number')
-    list_filter = ('is_active', 'is_patient', 'is_worker')
+    list_filter = ('is_active', 'is_patient', 'is_worker', 'is_dentist')
     ordering = ('-id', )
     list_per_page = 30
 
     fieldsets = BaseUserAdmin.fieldsets + (
         ("Additional information", {
-            "fields": ("phone_number", "profile_photo", "is_patient", "is_worker")
+            "fields": ("phone_number", "profile_photo", "is_patient", "is_worker", "is_dentist")
         }),
     )
 
