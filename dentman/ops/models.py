@@ -16,9 +16,11 @@ from tinymce.models import HTMLField
 User = get_user_model()
 storage = CustomFileSystemStorage()
 
+
 class Category(CreatedUpdatedMixin):
+    """Database model for the tree of categories to build nicely divided services into subcategories"""
     name = models.CharField("Category name", max_length=255, unique=True)
-    parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
+    parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL) # parent is a category for which this category is a subcategory
 
     class Meta:
         verbose_name = "Category"
@@ -29,9 +31,11 @@ class Category(CreatedUpdatedMixin):
             return f"{self.name}"
         return f"{self.parent} -> {self.name}"
 
+
 class Service(CreatedUpdatedMixin):
+    """Services are all possible services that patient can get in dentist's office"""
     name = models.CharField("Service name", max_length=255, unique=True)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True) # every service has to be a part of some category
 
     class Meta:
         verbose_name = "Service"
@@ -42,7 +46,9 @@ class Service(CreatedUpdatedMixin):
             return f"{self.name}"
         return f"{self.name} in category {self.category}"
 
+
 class VisitStatus(CreatedUpdatedMixin):
+    """Visit's statuses with BooleanFields to specify which situation each status describes"""
     name = models.CharField("Visit status", max_length=255, unique=True)
     is_booked = models.BooleanField("Is visit booked", default=False)
     is_postponed = models.BooleanField("Is visit postponed", default=False)
@@ -60,7 +66,14 @@ class VisitStatus(CreatedUpdatedMixin):
     def __str__(self):
         return f"Visit's status {self.name}"
 
+
 class Discount(CreatedUpdatedMixin):
+    """Discounts that are or were available in the service for customers"""
+    # Types of discounts
+    # 1) first_visit - promotion for patients that used this dentist for the first time
+    # 2) promo_code - promotion code that can be typed and it gives you special discount
+    # 3) min_purchase - promotion for regular patients
+    # 4) others - other types of possible discounts
     DISCOUNT_TYPES = (
         ('first_visit', 'First visit'),
         ('promo_code', 'Promotion code'),
@@ -77,15 +90,15 @@ class Discount(CreatedUpdatedMixin):
                                   ])
     discount_type = models.CharField("Discount type", max_length=50, choices=DISCOUNT_TYPES)
     promotion_code = models.CharField("Promotion code", max_length=30, blank=True)
-    valid_since = models.DateField("Discount valid date", null=True, blank=True)
-    valid_to = models.DateField("Discount valid to", null=True, blank=True)
-    is_currently_valid = models.BooleanField("Is currently valid", default=False)
+    valid_since = models.DateField("Discount valid date", null=True, blank=True) # since when discount is valid (null=since forever)
+    valid_to = models.DateField("Discount valid to", null=True, blank=True) # to when discount is valid (null=to forever)
+    is_currently_valid = models.BooleanField("Is currently valid", default=False) # flag not to calculate every time if discount is valid; flag is updated after every use
     why_invalid_summary = models.TextField("Why invalid summary", blank=True,
-                                            help_text="There is reason why this discount is not valid")
-    is_limited = models.BooleanField("Is discount limited", default=False)
+                                            help_text="There is reason why this discount is not valid") # short summary why discount is invalid (or info that is currently valid)
+    is_limited = models.BooleanField("Is discount limited", default=False) # if discount is limited by usage
     limit_value = models.IntegerField("Discount limit value", default=0, null=True, blank=True,
-                                      validators=[MinValueValidator(0, "Value cannot be less than 0")])
-    used_counter = models.IntegerField("Discount used counter", default=0)
+                                      validators=[MinValueValidator(0, "Value cannot be less than 0")]) # if is limited how many times discount can be used
+    used_counter = models.IntegerField("Discount used counter", default=0) # how much times discount was used
     additional_info = models.TextField("Additional information", blank=True)
 
     class Meta:
@@ -96,6 +109,7 @@ class Discount(CreatedUpdatedMixin):
         return f"Discount {self.name} -{self.percent}%"
 
     def save(self, *args, **kwargs):
+        # check if discount is still valid, update a flag and summary why is valid/invalid
         is_valid_date, invalid_date_reason = self.check_validation_date()
         is_valid_limit, invalid_limit_reason = self.check_limits()
 
@@ -110,6 +124,7 @@ class Discount(CreatedUpdatedMixin):
         super().save(*args, **kwargs)
 
     def check_validation_date(self):
+        """Check if discount is still up-to-date"""
         today = datetime.date.today()
 
         if self.valid_since is not None and today < self.valid_since:
@@ -119,11 +134,14 @@ class Discount(CreatedUpdatedMixin):
         return True, ""
 
     def check_limits(self):
+        """Check if discount hasn't reached its' limit of usage"""
         if self.is_limited and self.limit_value <= self.used_counter:
             return False, "Discount's limit has been reached"
         return True, ""
 
+
 class Visit(CreatedUpdatedMixin):
+    """Model describing patient's visits in dentist's office"""
     eid = models.UUIDField("EID", default=uuid.uuid4, editable=False)
     patient = models.ForeignKey(User, verbose_name="Patient", on_delete=models.SET_NULL, null=True, limit_choices_to={'is_patient': True})
     dentists = models.ManyToManyField(User, verbose_name="Dentists", limit_choices_to={'is_dentist': True}, related_name="dentists")
@@ -147,6 +165,7 @@ class Visit(CreatedUpdatedMixin):
         return f"Visit {self.patient.get_full_name()} at {self.scheduled_from}"
 
     def calculate_final_price(self):
+        """Method to calculate final price of the service including discounts"""
         current_final_price = self.price
 
         for discount in self.discounts.all():
@@ -156,7 +175,9 @@ class Visit(CreatedUpdatedMixin):
 
         self.final_price = current_final_price
 
+
 class Post(CreatedUpdatedMixin):
+    """Model for posts that office stuff can add and patients can read"""
     title = models.CharField("Title", max_length=500, unique=True)
     slug = models.SlugField("Slug", max_length=500, unique=True)
     main_photo = models.ImageField("Main photo", upload_to=get_upload_path, storage=storage, null=True,
@@ -174,7 +195,7 @@ class Post(CreatedUpdatedMixin):
     def save(self, *args, **kwargs):
         if self.pk:
             actual_photo = Post.objects.get(pk=self.pk).main_photo
-            if self.main_photo != actual_photo:
+            if self.main_photo != actual_photo: # if new photo has been uploaded delete old one and upload a new one
                 self.delete_old_file(actual_photo)
         super().save(*args, **kwargs)
 

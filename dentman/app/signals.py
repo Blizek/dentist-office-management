@@ -8,6 +8,7 @@ from dentman.utils import get_upload_path
 
 @receiver(post_save, sender=User)
 def move_profile_photo(sender, instance, created, **kwargs):
+    """Signal's function for user's profile photo to move from temporary folder into dedicated directory"""
     if instance.profile_photo and 'temp' in instance.profile_photo.name:
         old_name = instance.profile_photo.name
         filename = os.path.basename(old_name)
@@ -21,10 +22,12 @@ def move_profile_photo(sender, instance, created, **kwargs):
 
 @receiver(pre_delete, sender=User)
 def delete_profile_photo(sender, instance, **kwargs):
+    """Signal's function to delete user's profile photo when user is going to be deleted"""
     instance.delete_profile_photo()
-    
+
 @receiver(post_save, sender=Attachment)
 def move_file(sender, instance, created, **kwargs):
+    """Signal's function to move attachment file from temporary folder into dedicated directory"""
     if instance.file and 'temp' in instance.file.name:
         old_name = instance.file.name
         filename = os.path.basename(old_name)
@@ -38,4 +41,5 @@ def move_file(sender, instance, created, **kwargs):
 
 @receiver(pre_delete, sender=Attachment)
 def delete_file(sender, instance, **kwargs):
+    """Signal's function to delete attachment file when attachment is going to be deleted"""
     instance.delete_file()

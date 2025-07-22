@@ -28,6 +28,7 @@ class User(AbstractUser):
         if self.profile_photo:
             self.profile_photo.delete()
 
+
 class Attachment(models.Model):
     """Attachment model class"""
     file = models.FileField("File", upload_to=get_upload_path, storage=storage, blank=False, null=False, validators=[file_extension_validator])
@@ -44,6 +45,7 @@ class Attachment(models.Model):
     def delete_file(self):
         if self.file:
             self.file.delete()
+
 
 class AttachmentEntity(models.Model):
     """ManyToMany model between attachments and another models"""
@@ -70,6 +72,7 @@ class AttachmentEntity(models.Model):
             return f"{attachment_info} for {object_representation}"
         else:
             return attachment_info
+
 
 class Metrics(models.Model):
     """Model to describe all possible types of metrics"""
