@@ -154,6 +154,9 @@ MEDIA_ROOT = ROOT_DIR / 'pub/m/'
 STORAGE_URL = '/storage/'
 STORAGE_ROOT = ROOT_DIR / 'storage/'
 
+USERS_PROFILE_PHOTOS_URL = 'profile-photos'
+USERS_PROFILE_PHOTOS_ROOT = STORAGE_ROOT / 'users-prof-photo'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

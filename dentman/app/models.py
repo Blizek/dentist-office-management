@@ -1,4 +1,5 @@
 import os
+import uuid
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -6,27 +7,55 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.apps import apps
+from django.conf import settings
 
 from dentman.storage import CustomFileSystemStorage
 from dentman.utils import get_upload_path
 
+storage_user = CustomFileSystemStorage(location=f"{settings.USERS_PROFILE_PHOTOS_ROOT}/", base_url=f"/app/{settings.USERS_PROFILE_PHOTOS_URL}")
 storage = CustomFileSystemStorage()
 file_extension_validator = FileExtensionValidator(['pdf', 'jpg', 'png', 'mp4'])
+
+def get_profile_photo_upload_path(instance, filename):
+    """
+    Function to return path where users' profile photos are stored.
+
+    If it's new user then photo is stored in 'users-prof-photo/temp' directory
+    Otherwise photo is stored in 'users-prof-photo/{eid}' directory
+    """
+    instance_id = instance.id or 'temp'
+    if isinstance(instance_id, int):
+        d = f"{instance.eid}"
+    else:
+        d = 'temp'
+    return f"{d}/{filename}"
 
 
 class User(AbstractUser):
     """User model class"""
+    eid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     phone_number = models.CharField("Phone number", max_length=20, blank=True, null=True)
-    profile_photo = models.ImageField("Profile photo", upload_to=get_upload_path, storage=storage, blank=True, null=True)
+    profile_photo = models.ImageField("Profile photo", upload_to=get_profile_photo_upload_path, storage=storage_user, blank=True, null=True)
     is_patient = models.BooleanField("Is patient", default=True)
     is_worker = models.BooleanField("Is worker", default=False)
     is_dentist = models.BooleanField("Is dentist", default=False)
     is_dev = models.BooleanField("Is developer", default=False)
     additional_info = models.TextField("Additional information", blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+            actual_photo = User.objects.get(pk=self.pk).profile_photo
+            if self.profile_photo != actual_photo: # if new profile photo has been uploaded delete old one and upload a new one
+                self.delete_old_file(actual_photo)
+        super().save(*args, **kwargs)
+
     def delete_profile_photo(self):
         if self.profile_photo:
             self.profile_photo.delete()
+
+    def delete_old_file(self, old_file):
+        if old_file.name != "":
+            os.remove(str(storage_user.base_location) + f"/{old_file.name}")
 
 
 class Attachment(models.Model):

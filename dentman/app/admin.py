@@ -17,10 +17,11 @@ class UserAdmin(BaseUserAdmin):
     list_filter = ('is_active', 'is_patient', 'is_worker', 'is_dentist')
     ordering = ('-id', )
     list_per_page = 30
+    readonly_fields = BaseUserAdmin.readonly_fields + ('eid', )
 
     fieldsets = BaseUserAdmin.fieldsets + (
         ("Additional information", {
-            "fields": ("phone_number", "profile_photo", "is_patient", "is_worker", "is_dentist")
+            "fields": ("eid", "phone_number", "profile_photo", "is_patient", "is_worker", "is_dentist")
         }),
     )
 

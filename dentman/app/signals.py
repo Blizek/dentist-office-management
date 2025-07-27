@@ -3,7 +3,7 @@ import os
 from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
 
-from dentman.app.models import User, Attachment
+from dentman.app.models import User, Attachment, get_profile_photo_upload_path
 from dentman.utils import get_upload_path
 
 @receiver(post_save, sender=User)
@@ -12,7 +12,7 @@ def move_profile_photo(sender, instance, created, **kwargs):
     if instance.profile_photo and 'temp' in instance.profile_photo.name:
         old_name = instance.profile_photo.name
         filename = os.path.basename(old_name)
-        new_name = get_upload_path(instance, filename)
+        new_name = get_profile_photo_upload_path(instance, filename)
         if old_name != new_name:
             file = instance.profile_photo.storage.open(old_name)
             instance.profile_photo.storage.save(new_name, file)
