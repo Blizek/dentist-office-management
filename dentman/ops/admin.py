@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from dentman.ops.forms import VisitAdminForm
 from dentman.ops.models import Category, Service, VisitStatus, Discount, Visit, Post
 
 @admin.register(Category)
@@ -40,14 +41,14 @@ class VisitStatusAdmin(admin.ModelAdmin):
 
 @admin.register(Discount)
 class DiscountAdmin(admin.ModelAdmin):
-    list_display = ('name', 'percent', 'discount_type', 'is_currently_valid', 'is_limited', 'limit_value', 'used_counter', )
+    list_display = ('name', 'percent', 'discount_type', 'is_currently_valid', 'is_active', 'is_limited', 'limit_value', 'used_counter', )
     readonly_fields = ('used_counter', 'why_invalid_summary', 'is_currently_valid', )
     search_fields = ('name', 'percent', 'discount_type', )
-    list_filter = ('discount_type', 'is_limited', )
+    list_filter = ('discount_type', 'is_currently_valid', 'is_active', 'is_limited', )
     fieldsets = (
         (
             '', {
-                'fields': ('name', 'description', 'percent', 'discount_type', 'promotion_code', )
+                'fields': ('name', 'description', 'percent', 'discount_type', 'promotion_code', 'is_active', )
             }
         ), (
             'Is valid', {
@@ -70,6 +71,7 @@ class DiscountAdmin(admin.ModelAdmin):
 
 @admin.register(Visit)
 class VisitAdmin(admin.ModelAdmin):
+    form = VisitAdminForm
     list_display = ('eid', 'patient', 'visit_status', 'scheduled_from', 'final_price')
     list_filter = ('visit_status', 'dentists')
     filter_horizontal = ('dentists', 'discounts')
@@ -78,7 +80,7 @@ class VisitAdmin(admin.ModelAdmin):
     fieldsets = (
         (
             '', {
-                'fields': ('eid', 'patient', 'dentists')
+                'fields': ('eid', 'patient', 'service', 'dentists')
             }
         ), (
             'Date and time', {

@@ -6,6 +6,7 @@ from decimal import Decimal
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.timezone import localtime
 
 from dentman.app.mixins import CreatedUpdatedMixin
 from dentman.storage import CustomFileSystemStorage
@@ -20,7 +21,9 @@ storage = CustomFileSystemStorage()
 class Category(CreatedUpdatedMixin):
     """Database model for the tree of categories to build nicely divided services into subcategories"""
     name = models.CharField("Category name", max_length=255, unique=True)
-    parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL) # parent is a category for which this category is a subcategory
+    parent = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL
+    ) # parent is a category for which this category is a subcategory
 
     class Meta:
         verbose_name = "Category"
@@ -36,6 +39,7 @@ class Service(CreatedUpdatedMixin):
     """Services are all possible services that patient can get in dentist's office"""
     name = models.CharField("Service name", max_length=255, unique=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True) # every service has to be a part of some category
+
 
     class Meta:
         verbose_name = "Service"
@@ -71,7 +75,7 @@ class Discount(CreatedUpdatedMixin):
     """Discounts that are or were available in the service for customers"""
     # Types of discounts
     # 1) first_visit - promotion for patients that used this dentist for the first time
-    # 2) promo_code - promotion code that can be typed and it gives you special discount
+    # 2) promo_code - promotion code that can be typed, and it gives you special discount
     # 3) min_purchase - promotion for regular patients
     # 4) others - other types of possible discounts
     DISCOUNT_TYPES = (
@@ -92,12 +96,17 @@ class Discount(CreatedUpdatedMixin):
     promotion_code = models.CharField("Promotion code", max_length=30, blank=True)
     valid_since = models.DateField("Discount valid date", null=True, blank=True) # since when discount is valid (null=since forever)
     valid_to = models.DateField("Discount valid to", null=True, blank=True) # to when discount is valid (null=to forever)
-    is_currently_valid = models.BooleanField("Is currently valid", default=False) # flag not to calculate every time if discount is valid; flag is updated after every use
+    is_currently_valid = models.BooleanField(
+        "Is currently valid", default=False
+    ) # flag not to calculate every time if discount is valid; flag is updated after every use
     why_invalid_summary = models.TextField("Why invalid summary", blank=True,
-                                            help_text="There is reason why this discount is not valid") # short summary why discount is invalid (or info that is currently valid)
+                                            help_text="There is reason why this discount is not valid"
+    ) # short summary why discount is invalid (or info that is currently valid)
     is_limited = models.BooleanField("Is discount limited", default=False) # if discount is limited by usage
     limit_value = models.IntegerField("Discount limit value", default=0, null=True, blank=True,
-                                      validators=[MinValueValidator(0, "Value cannot be less than 0")]) # if is limited how many times discount can be used
+                                      validators=[MinValueValidator(0, "Value cannot be less than 0")]
+    ) # if is limited how many times discount can be used
+    is_active = models.BooleanField("Is discount active", default=True)
     used_counter = models.IntegerField("Discount used counter", default=0) # how much times discount was used
     additional_info = models.TextField("Additional information", blank=True)
 
@@ -112,9 +121,10 @@ class Discount(CreatedUpdatedMixin):
         # check if discount is still valid, update a flag and summary why is valid/invalid
         is_valid_date, invalid_date_reason = self.check_validation_date()
         is_valid_limit, invalid_limit_reason = self.check_limits()
+        is_active, inactive_info = self.check_if_active()
 
-        why_invalid = f"{invalid_date_reason}\n{invalid_limit_reason}"
-        if is_valid_date and is_valid_limit:
+        why_invalid = f"{inactive_info}\n{invalid_date_reason}\n{invalid_limit_reason}"
+        if is_valid_date and is_valid_limit and is_active:
             self.is_currently_valid = True
             why_invalid = f"Discount is currently valid"
         else:
@@ -134,9 +144,15 @@ class Discount(CreatedUpdatedMixin):
         return True, ""
 
     def check_limits(self):
-        """Check if discount hasn't reached its' limit of usage"""
+        """Check if discount hasn't reached its limit of usage"""
         if self.is_limited and self.limit_value <= self.used_counter:
             return False, "Discount's limit has been reached"
+        return True, ""
+
+    def check_if_active(self):
+        """Check if discount is currently active"""
+        if not self.is_active:
+            return False, "Discount is currently inactive"
         return True, ""
 
 
@@ -144,6 +160,7 @@ class Visit(CreatedUpdatedMixin):
     """Model describing patient's visits in dentist's office"""
     eid = models.UUIDField("EID", default=uuid.uuid4, editable=False)
     patient = models.ForeignKey(User, verbose_name="Patient", on_delete=models.SET_NULL, null=True, limit_choices_to={'is_patient': True})
+    service = models.ForeignKey(Service, verbose_name="Service", on_delete=models.SET_NULL, null=True)
     dentists = models.ManyToManyField(User, verbose_name="Dentists", limit_choices_to={'is_dentist': True}, related_name="dentists")
     scheduled_from = models.DateTimeField("Scheduled from")
     scheduled_to = models.DateTimeField("Scheduled to")
@@ -153,7 +170,7 @@ class Visit(CreatedUpdatedMixin):
     visit_status = models.ForeignKey(VisitStatus, verbose_name="Visit's status", on_delete=models.SET_NULL, null=True)
     additional_info = models.TextField("Additional information", blank=True, null=True)
     price = models.DecimalField("Price", max_digits=10, decimal_places=2)
-    discounts = models.ManyToManyField(Discount, verbose_name="Discounts", related_name="discounts")
+    discounts = models.ManyToManyField(Discount, verbose_name="Discounts", related_name="discounts", blank=True)
     final_price = models.DecimalField("Final price", max_digits=10, decimal_places=2, default=0.0,
                                       help_text="Final price of service including discounts")
 
@@ -162,7 +179,8 @@ class Visit(CreatedUpdatedMixin):
         verbose_name_plural = "visits"
 
     def __str__(self):
-        return f"Visit {self.patient.get_full_name()} at {self.scheduled_from}"
+        scheduled_from_localtime = localtime(self.scheduled_from)
+        return f"{self.patient.get_full_name()}'s visit for {self.service.name} scheduled for {scheduled_from_localtime.strftime('%d.%m.%Y %H:%M')}"
 
     def calculate_final_price(self):
         """Method to calculate final price of the service including discounts"""
