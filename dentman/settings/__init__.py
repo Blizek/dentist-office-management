@@ -65,6 +65,7 @@ INSTALLED_APPS = [
 
     'dentman.app',
     'dentman.ops',
+    'dentman.man',
 ]
 
 MIDDLEWARE = [
