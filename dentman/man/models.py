@@ -85,7 +85,7 @@ class ManagementStaff(CreatedUpdatedMixin):
     """
     worker = models.OneToOneField(Worker, verbose_name="Worker", on_delete=models.CASCADE)
     is_hr = models.BooleanField("Is HR", default=False,
-                                help_text="If worker can employ and lay off other workers (which don't have hr role) select the checkbox"
+                                help_text="If worker can employ and layoff other workers (which don't have hr role) select the checkbox"
     )
     is_financial = models.BooleanField("Is financial", default=False,
                                        help_text="If worker can manage finance, get access to financial summaries select the checkbox"
