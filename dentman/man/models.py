@@ -17,8 +17,14 @@ pdf_extension_validator = FileExtensionValidator(["pdf"])
 
 class Worker(CreatedUpdatedMixin):
     """
-    TODO: Add model describing comment
     TODO: Add admin view
+    """
+    """
+    Model to describe all type of workers in office. Fields are:
+    1) `user` - OneToOneField to model `app.User`
+    2) `since_when` - Date since user is active worker in office
+    3) `to_when` - Date until user is active worker in office (if user still works then this field is blank
+    4) `is_active` - non-editable boolean field to filter previous workers from actual workers (value is set automatically after setting value in `to_when` field) 
     """
     user = models.OneToOneField(User, verbose_name="User", on_delete=models.CASCADE)
     since_when = models.DateField("Since when", help_text="Date since this user is a worker", default=date.today)
@@ -42,8 +48,12 @@ class Worker(CreatedUpdatedMixin):
 
 class DentistStaff(CreatedUpdatedMixin):
     """
-    TODO: Add model describing comment
     TODO: Add admin view
+    """
+    """
+    Model to describe all workers related with dentist staff. Model has fields:
+    1) `worker` - OneToOneField to model `man.Worker`
+    2) `is_dentist` - boolean value if worker is dentist or dentist assistant 
     """
     worker = models.OneToOneField(Worker, verbose_name="Worker", on_delete=models.CASCADE)
     is_dentist = models.BooleanField("Is dentist", default=False,
@@ -64,8 +74,14 @@ class DentistStaff(CreatedUpdatedMixin):
 
 class ManagementStaff(CreatedUpdatedMixin):
     """
-    TODO: Add model describing comment
     TODO: Add admin view
+    TODO: Fix typo in help_text for is_hr
+    """
+    """
+    Model for all office management workers. Fields:
+    1) `worker` - OneToOneField to model `man.Worker`
+    2) `is_hr` - boolean value if worker is responsible to employ and layoff new employees
+    3) `is_financial` - boolean value if worker is responsible to manage financial stuff and see office balance
     """
     worker = models.OneToOneField(Worker, verbose_name="Worker", on_delete=models.CASCADE)
     is_hr = models.BooleanField("Is HR", default=False,
@@ -90,8 +106,14 @@ class ManagementStaff(CreatedUpdatedMixin):
 
 class WorkersAvailability(CreatedUpdatedMixin):
     """
-    TODO: Add model describing comment
     TODO: Add admin view
+    """
+    """
+    Model to describe all office workers schedule availability. Fields:
+    1) `worker` - OneToOneField to model `man.Worker`
+    2) `weekday` - day of the week (1 is Monday, 7 is Sunday)
+    3) `since` - TimeField from what time is worker available that weekday
+    4) `until` - TimeField until what time is worker available that weekday 
     """
     WEEKDAYS = (
         (1, "Monday"),
@@ -118,8 +140,15 @@ class WorkersAvailability(CreatedUpdatedMixin):
 
 class SpecialAvailability(CreatedUpdatedMixin):
     """
-    TODO: Add model describing comment
     TODO: Add admin view
+    """
+    """
+    Model to describe special availabilities i.e. when have to that day work shorter than normally. Fields are:
+    1) `worker` - OneToOneField to model `man.Worker`
+    2) `date` - Date of special availability
+    3) `since` - Time since worker will be available
+    4) `until` - Time until worker will be available
+    5) `reason` - TextField with reason for special availability
     """
     worker = models.ForeignKey(Worker, verbose_name="Worker", on_delete=models.CASCADE)
     date = models.DateField("Date of availability", null=False, blank=False)
@@ -137,8 +166,15 @@ class SpecialAvailability(CreatedUpdatedMixin):
 
 class Inaccessibility(CreatedUpdatedMixin):
     """
-    TODO: Add model describing comment
     TODO: Add admin view
+    """
+    """
+    Model for inaccessibility. Fields:
+    1) `worker` - OneToOneField to model `man.Worker`
+    2) `date` - Date of inaccessibility
+    3) `is_whole_day` - boolean value if user in inaccessible whole day
+    4) `since` - Time since inaccessibility (if `is_whole_day` is False)
+    5) `until` - Time until inaccessibility (if `is_whole_day` is False)
     """
     worker = models.ForeignKey(Worker, verbose_name="Worker", on_delete=models.CASCADE)
     date = models.DateField("Date of inaccessibility", null=False, blank=False)
@@ -180,8 +216,20 @@ class Employment(CreatedUpdatedMixin):
     TODO: signal to move from temp folder into correct directory
     TODO: add replacing old file with new one
     TODO: add validating in save if `is_for_limited_time` is not set that `until_when` has to not empty
-    TODO: Add model describing comment
     TODO: Add admin view
+    """
+    """
+    Model describing contract details between office and employees. Model has fields:
+    1) `new_employee` - foreign key to `man.Worker` model; new employee in office
+    2) `representative` - foreign key to `man.Employee` model; office representative that signed contract
+    3) `type_of_employment` - type of signed contract (full time, part time etc.); all are stored in `EMPLOYMENT_TYPES` tuple
+    4) `is_for_limited_time` - boolean value if employment is for limited time only
+    5) `since_when` - date since contract is valid and worker is employee
+    6) `until_when` - date until contract is valid and worker is employee (only when `is_for_limited_time` is True)
+    7) `agreement_date` - date when contract was signed
+    8) `salary` - employee's salary
+    9) `is_active` - boolean value if employment is active
+    10) `contract_scan` - can of signed contract in pdf format
     """
     EMPLOYMENT_TYPES = (
         ('full_time', 'Full-time'),
@@ -223,8 +271,15 @@ class Employment(CreatedUpdatedMixin):
 
 class Bonus(CreatedUpdatedMixin):
     """
-    TODO: Add model describing comment
     TODO: Add admin view
+    """
+    """
+    Model with bonuses for employees. Model has fields:
+    1) `worker` - foreign key to `man.Worker` model; employee that received bonus
+    2) `management_staff` - foreign key to `man.ManagementStaff` model; employee that gave bonus
+    3) `bonus_amount` - amount of bonus
+    4) `bonus_date` - date of bonus
+    5) `bonus_reason` - reason of bonus
     """
     worker = models.ForeignKey(Worker, verbose_name="Worker", on_delete=models.CASCADE)
     management_staff = models.ForeignKey(ManagementStaff, verbose_name="Management staff", on_delete=models.CASCADE)
@@ -242,8 +297,13 @@ class Bonus(CreatedUpdatedMixin):
 
 class Resource(CreatedUpdatedMixin):
     """
-    TODO: Add model describing comment
     TODO: Add admin view
+    """
+    """
+    Model with resources in office. Has fields:
+    1) `resource_name` - name of resource
+    2) `default_metric` - foreign key to `app.Metrics` model; in this metric all data will be shown (i.e. if meter is selected, then amount will be shown is meters)
+    3) `actual_amount` - actual amount of resource in `default_metric` metric
     """
     resource_name = models.CharField("Resource name", max_length=255, blank=False, null=False)
     default_metric = models.ForeignKey(Metrics, verbose_name="Default metric", on_delete=models.SET_NULL, null=True)
@@ -261,8 +321,15 @@ class ResourcesUpdate(CreatedUpdatedMixin):
     """
     TODO: Add making update of resource after adding update record
     TODO: Add validation to not set negative amount of resource after update
-    TODO: Add model describing comment
     TODO: Add admin view
+    """
+    """
+    Model to describe all updates of resource amount. Fields are:
+    1) `resource` - foreign key to `man.Resource` model
+    2) `amount_change` - how much of resource has changed
+    3) `metric` - foreign key to `app.Metrics` model; type in which metric change is passed
+    4) `is_newly_delivered` - whether this resource is newly delivered or was used
+    5) `update_datetime` - datetime when was update (i.e. when new resource has come)
     """
     resource = models.ForeignKey(Resource, verbose_name="Resource", on_delete=models.SET_NULL, null=True)
     amount_change = models.DecimalField("Amount change", max_digits=20, decimal_places=7, blank=False, null=False)
