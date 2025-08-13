@@ -1,10 +1,12 @@
 from datetime import date
+import os
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.utils import timezone
+from django.conf import settings
 
 from dentman.app.mixins import CreatedUpdatedMixin
 from dentman.storage import CustomFileSystemStorage
@@ -12,13 +14,13 @@ from dentman.utils import get_upload_path
 from dentman.app.models import Metrics
 
 User = get_user_model()
-storage = CustomFileSystemStorage()
+storage = CustomFileSystemStorage(
+    location=settings.STORAGE_ROOT / "contr",
+    base_url="/man/contract"
+)
 pdf_extension_validator = FileExtensionValidator(["pdf"])
 
 class Worker(CreatedUpdatedMixin):
-    """
-    TODO: Add admin view
-    """
     """
     Model to describe all type of workers in office. Fields are:
     1) `user` - OneToOneField to model `app.User`
@@ -40,16 +42,13 @@ class Worker(CreatedUpdatedMixin):
 
     def save(self, *args, **kwargs):
         # if value `to_when` is set that means that worker is still active
-        if not self.to_when:
+        if self.to_when:
             self.is_active = False
 
         super().save(*args, **kwargs)
 
 
 class DentistStaff(CreatedUpdatedMixin):
-    """
-    TODO: Add admin view
-    """
     """
     Model to describe all workers related with dentist staff. Model has fields:
     1) `worker` - OneToOneField to model `man.Worker`
@@ -73,10 +72,6 @@ class DentistStaff(CreatedUpdatedMixin):
 
 
 class ManagementStaff(CreatedUpdatedMixin):
-    """
-    TODO: Add admin view
-    TODO: Fix typo in help_text for is_hr
-    """
     """
     Model for all office management workers. Fields:
     1) `worker` - OneToOneField to model `man.Worker`
@@ -105,9 +100,6 @@ class ManagementStaff(CreatedUpdatedMixin):
 
 
 class WorkersAvailability(CreatedUpdatedMixin):
-    """
-    TODO: Add admin view
-    """
     """
     Model to describe all office workers schedule availability. Fields:
     1) `worker` - OneToOneField to model `man.Worker`
@@ -140,9 +132,6 @@ class WorkersAvailability(CreatedUpdatedMixin):
 
 class SpecialAvailability(CreatedUpdatedMixin):
     """
-    TODO: Add admin view
-    """
-    """
     Model to describe special availabilities i.e. when have to that day work shorter than normally. Fields are:
     1) `worker` - OneToOneField to model `man.Worker`
     2) `date` - Date of special availability
@@ -165,9 +154,6 @@ class SpecialAvailability(CreatedUpdatedMixin):
 
 
 class Inaccessibility(CreatedUpdatedMixin):
-    """
-    TODO: Add admin view
-    """
     """
     Model for inaccessibility. Fields:
     1) `worker` - OneToOneField to model `man.Worker`
@@ -213,16 +199,10 @@ class Inaccessibility(CreatedUpdatedMixin):
 
 class Employment(CreatedUpdatedMixin):
     """
-    TODO: signal to move from temp folder into correct directory
-    TODO: add replacing old file with new one
-    TODO: add validating in save if `is_for_limited_time` is not set that `until_when` has to not empty
-    TODO: Add admin view
-    """
-    """
     Model describing contract details between office and employees. Model has fields:
     1) `new_employee` - foreign key to `man.Worker` model; new employee in office
-    2) `representative` - foreign key to `man.Employee` model; office representative that signed contract
-    3) `type_of_employment` - type of signed contract (full time, part time etc.); all are stored in `EMPLOYMENT_TYPES` tuple
+    2) `representative` - foreign key to `man.ManagementStaff` model; office representative that signed contract
+    3) `type_of_employment` - type of signed contract (full-time, part-time etc.); all are stored in `EMPLOYMENT_TYPES` tuple
     4) `is_for_limited_time` - boolean value if employment is for limited time only
     5) `since_when` - date since contract is valid and worker is employee
     6) `until_when` - date until contract is valid and worker is employee (only when `is_for_limited_time` is True)
@@ -244,12 +224,12 @@ class Employment(CreatedUpdatedMixin):
 
     new_employee = models.ForeignKey(Worker, verbose_name="New employee", on_delete=models.CASCADE)
     representative = models.ForeignKey(ManagementStaff, verbose_name="Representative", on_delete=models.CASCADE)
-    type_of_employment = models.PositiveSmallIntegerField("Type of employment", choices=EMPLOYMENT_TYPES, blank=False)
+    type_of_employment = models.CharField("Type of employment", choices=EMPLOYMENT_TYPES, blank=False, max_length=20)
     is_for_limited_time = models.BooleanField("Is limited for time", default=False,
                                               help_text="If employment is set only for limited time, select the checkbox"
     )
     since_when = models.DateField("Since when", blank=False, null=False, help_text="Date since new employee starts working")
-    until_when = models.DateField("Until when", blank=False, null=False,
+    until_when = models.DateField("Until when", blank=True, null=True,
                                   help_text="Date until new employee works (select only when job is for limited time)"
     )
     agreement_date = models.DateField("Agreement date", blank=False, null=False,
@@ -268,11 +248,31 @@ class Employment(CreatedUpdatedMixin):
     def __str__(self):
         return f"{self.new_employee.user.get_full_name()}'s employment"
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+            actual_contract_scan = Employment.objects.get(pk=self.pk).contract_scan
+            if self.contract_scan != actual_contract_scan: # if new contract scan has been uploaded delete old one and upload a new one
+                self.delete_old_file(actual_contract_scan)
+        super().save(*args, **kwargs)
+
+    def delete_contract_scan(self):
+        if self.contract_scan:
+            self.contract_scan.delete()
+
+    def delete_old_file(self, old_file):
+        if old_file.name != "":
+            os.remove(str(storage.base_location) + f"/{old_file.name}")
+
+    def clean(self):
+        super().clean()
+
+        if not self.is_for_limited_time and self.until_when:
+            raise ValidationError(
+                {"until_when": "If employment is not for limited time you can't set until when employment is active"}
+            )
+
 
 class Bonus(CreatedUpdatedMixin):
-    """
-    TODO: Add admin view
-    """
     """
     Model with bonuses for employees. Model has fields:
     1) `worker` - foreign key to `man.Worker` model; employee that received bonus
@@ -297,9 +297,6 @@ class Bonus(CreatedUpdatedMixin):
 
 class Resource(CreatedUpdatedMixin):
     """
-    TODO: Add admin view
-    """
-    """
     Model with resources in office. Has fields:
     1) `resource_name` - name of resource
     2) `default_metric` - foreign key to `app.Metrics` model; in this metric all data will be shown (i.e. if meter is selected, then amount will be shown is meters)
@@ -314,14 +311,13 @@ class Resource(CreatedUpdatedMixin):
         verbose_name_plural = "resources"
 
     def __str__(self):
-        return f"{self.resource_name} - {self.actual_amount}{self.default_metric.measurement_name_shortcut}"
+        return f"{self.resource_name} - {self.actual_amount:.7f}{self.default_metric.measurement_name_shortcut}"
 
 
 class ResourcesUpdate(CreatedUpdatedMixin):
     """
     TODO: Add making update of resource after adding update record
     TODO: Add validation to not set negative amount of resource after update
-    TODO: Add admin view
     """
     """
     Model to describe all updates of resource amount. Fields are:
