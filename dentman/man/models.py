@@ -26,7 +26,8 @@ class Worker(CreatedUpdatedMixin):
     1) `user` - OneToOneField to model `app.User`
     2) `since_when` - Date since user is active worker in office
     3) `to_when` - Date until user is active worker in office (if user still works then this field is blank
-    4) `is_active` - non-editable boolean field to filter previous workers from actual workers (value is set automatically after setting value in `to_when` field) 
+    4) `is_active` - non-editable boolean field to filter previous workers from actual workers (value is set automatically
+    after setting value in `to_when` field)
     """
     user = models.OneToOneField(User, verbose_name="User", on_delete=models.CASCADE)
     since_when = models.DateField("Since when", help_text="Date since this user is a worker", default=date.today)
@@ -299,7 +300,8 @@ class Resource(CreatedUpdatedMixin):
     """
     Model with resources in office. Has fields:
     1) `resource_name` - name of resource
-    2) `default_metric` - foreign key to `app.Metrics` model; in this metric all data will be shown (i.e. if meter is selected, then amount will be shown is meters)
+    2) `default_metric` - foreign key to `app.Metrics` model; in this metric all data will be shown (i.e. if meter is
+    selected, then amount will be shown is meters)
     3) `actual_amount` - actual amount of resource in `default_metric` metric
     """
     resource_name = models.CharField("Resource name", max_length=255, blank=False, null=False)
@@ -342,4 +344,18 @@ class ResourcesUpdate(CreatedUpdatedMixin):
     def __str__(self):
         status = "ADDED" if self.is_newly_delivered else "REMOVED"
         return f"{self.resource.resource_name}'s update: {self.amount_change}{self.metric.measurement_name_shortcut} {status}"
+
+    def save(self, *args, **kwargs):
+        if not self.is_newly_delivered and self.resource.actual_amount < self.amount_change:
+            raise ValidationError({
+                "amount_change": "You can't use more resource than you have"
+            })
+
+        if not self.is_newly_delivered:
+            self.resource.actual_amount -= self.amount_change
+        else:
+            self.resource.actual_amount += self.amount_change
+        self.resource.save()
+
+        super().save(*args, **kwargs)
 
