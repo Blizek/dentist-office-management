@@ -1,5 +1,4 @@
 from datetime import date
-import os
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -10,7 +9,7 @@ from django.conf import settings
 
 from dentman.app.mixins import CreatedUpdatedMixin
 from dentman.storage import CustomFileSystemStorage
-from dentman.utils import get_upload_path
+from dentman.utils import get_upload_path, delete_old_file
 from dentman.app.models import Metrics
 
 User = get_user_model()
@@ -253,16 +252,8 @@ class Employment(CreatedUpdatedMixin):
         if self.pk:
             actual_contract_scan = Employment.objects.get(pk=self.pk).contract_scan
             if self.contract_scan != actual_contract_scan: # if new contract scan has been uploaded delete old one and upload a new one
-                self.delete_old_file(actual_contract_scan)
+                delete_old_file(actual_contract_scan)
         super().save(*args, **kwargs)
-
-    def delete_contract_scan(self):
-        if self.contract_scan:
-            self.contract_scan.delete()
-
-    def delete_old_file(self, old_file):
-        if old_file.name != "":
-            os.remove(str(storage.base_location) + f"/{old_file.name}")
 
     def clean(self):
         super().clean()
@@ -317,10 +308,6 @@ class Resource(CreatedUpdatedMixin):
 
 
 class ResourcesUpdate(CreatedUpdatedMixin):
-    """
-    TODO: Add making update of resource after adding update record
-    TODO: Add validation to not set negative amount of resource after update
-    """
     """
     Model to describe all updates of resource amount. Fields are:
     1) `resource` - foreign key to `man.Resource` model

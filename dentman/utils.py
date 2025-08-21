@@ -1,12 +1,18 @@
 import re
+import os
 
-def get_upload_path(instance, filename):
+from django.db.models.fields.files import FieldFile
+from django.http.response import HttpResponseBase, FileResponse, HttpResponse
+from django.db.models import Model
+
+def get_upload_path(instance: Model, filename: str, with_class_name: bool=False) -> str:
     """
-    TODO: Add typing for arguments and return result (in all functions/methods in project)
-
     Function to return a path in storage where file will be stored.
 
     It's based on if record has id (isn't a new record) or doesn't have id (isn't an existing record)
+
+    If with_class_name is true the main directory in storage will be named after class name. Otherwise, it will be skipped
+    and named as set in file's storage
 
     If it's a new record then file it temporary stored in {class_name}/'temp' directory
 
@@ -19,17 +25,31 @@ def get_upload_path(instance, filename):
         d = "/".join(re.findall("..", f"{instance_id:04d}"))
     else:
         d = 'temp'
-    return f"{instance.__class__.__name__}/{d}/{filename}"
+    if with_class_name:
+        return f"{instance.__class__.__name__}/{d}/{filename}"
+    return f"/{d}/{filename}"
 
-def delete_old_file():
+def delete_old_file(old_file: FieldFile) -> None:
     """
-    TODO: Add generic function to delete old files (used for replacing old file with new ones)
-    """
-    pass
+    Function to delete old file from storage.
+    As argument gets file from FileField or image from ImageField
 
-def file_in_response():
+    If this file exists then we get storage in which is this file and delete it
     """
-    TODO: Add generic HttpResponse to return file from storage
-    (all authentication if user can get file has to be done in view before executing function)
+    if old_file.name != "":
+        storage = old_file.storage
+        file_path = str(storage.base_location) + f"/{old_file.name}"
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+
+def return_file_in_response(storage_root: str, file_path: str) -> HttpResponseBase:
     """
-    pass
+    Function to only return in response file from storage
+
+    All authentication to show or not file is should be done before executing this function in view's code
+    """
+    file_full_path = os.path.join(storage_root, file_path)
+    if os.path.exists(file_full_path):
+        return FileResponse(open(file_full_path, 'rb'))
+    return HttpResponse(status=404)

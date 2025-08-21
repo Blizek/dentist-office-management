@@ -4,7 +4,7 @@ from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
 
 from dentman.man.models import Employment
-from dentman.utils import get_upload_path
+from dentman.utils import get_upload_path, delete_old_file
 
 @receiver(post_save, sender=Employment)
 def move_contract_scan(sender, instance, created, **kwargs):
@@ -24,4 +24,4 @@ def move_contract_scan(sender, instance, created, **kwargs):
 @receiver(pre_delete, sender=Employment)
 def delete_contract_scan(sender, instance, **kwargs):
     """Signal's function to delete employment's contract scan when user is going to be deleted"""
-    instance.delete_contract_scan()
+    delete_old_file(instance.contract_scan)

@@ -10,13 +10,14 @@ from django.apps import apps
 from django.conf import settings
 
 from dentman.storage import CustomFileSystemStorage
-from dentman.utils import get_upload_path
+from dentman.utils import get_upload_path, delete_old_file
+from dentman.app.mixins import CreatedUpdatedMixin
 
-storage_user = CustomFileSystemStorage(location=f"{settings.USERS_PROFILE_PHOTOS_ROOT}/", base_url=f"/app/{settings.USERS_PROFILE_PHOTOS_URL}")
+storage_user = CustomFileSystemStorage(location=settings.STORAGE_ROOT / 'users-prof-photo', base_url=f"/app/profile-photos")
 storage = CustomFileSystemStorage()
 file_extension_validator = FileExtensionValidator(['pdf', 'jpg', 'png', 'mp4'])
 
-def get_profile_photo_upload_path(instance, filename):
+def get_profile_photo_upload_path(instance: models.Model, filename: str) -> str:
     """
     Function to return path where users' profile photos are stored.
 
@@ -31,7 +32,7 @@ def get_profile_photo_upload_path(instance, filename):
     return f"{d}/{filename}"
 
 
-class User(AbstractUser):
+class User(AbstractUser, CreatedUpdatedMixin):
     """User model class"""
     eid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     phone_number = models.CharField("Phone number", max_length=20, blank=True, null=True)
@@ -46,19 +47,11 @@ class User(AbstractUser):
         if self.pk:
             actual_photo = User.objects.get(pk=self.pk).profile_photo
             if self.profile_photo != actual_photo: # if new profile photo has been uploaded delete old one and upload a new one
-                self.delete_old_file(actual_photo)
+                delete_old_file(actual_photo)
         super().save(*args, **kwargs)
 
-    def delete_profile_photo(self):
-        if self.profile_photo:
-            self.profile_photo.delete()
 
-    def delete_old_file(self, old_file):
-        if old_file.name != "":
-            os.remove(str(storage_user.base_location) + f"/{old_file.name}")
-
-
-class Attachment(models.Model):
+class Attachment(CreatedUpdatedMixin):
     """Attachment model class"""
     file = models.FileField("File", upload_to=get_upload_path, storage=storage, blank=False, null=False, validators=[file_extension_validator])
     is_active = models.BooleanField("Is active", default=True)
@@ -71,12 +64,8 @@ class Attachment(models.Model):
     def __str__(self):
         return f"Attachment {os.path.basename(self.file.name)}"
 
-    def delete_file(self):
-        if self.file:
-            self.file.delete()
 
-
-class AttachmentEntity(models.Model):
+class AttachmentEntity(CreatedUpdatedMixin):
     """ManyToMany model between attachments and another models"""
     attachment = models.ForeignKey(Attachment, on_delete=models.CASCADE, verbose_name="Attachment", null=False, blank=False)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, verbose_name="Content type", null=False, blank=False)
@@ -103,7 +92,7 @@ class AttachmentEntity(models.Model):
             return attachment_info
 
 
-class Metrics(models.Model):
+class Metrics(CreatedUpdatedMixin):
     """Model to describe all possible types of metrics"""
     MEASUREMENT_TYPES = (
         (1, "Length"),

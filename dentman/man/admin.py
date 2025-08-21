@@ -8,7 +8,7 @@ from dentman.man.forms import EmploymentAdminForm
 
 @admin.register(Worker)
 class WorkerAdmin(admin.ModelAdmin):
-    def worker_name(self, obj):
+    def worker_name(self, obj: Worker) -> str:
         return f"Worker {obj.user.get_full_name()}"
     worker_name.short_description = "Worker name"
 
@@ -25,14 +25,14 @@ class WorkerAdmin(admin.ModelAdmin):
 
 @admin.register(DentistStaff)
 class DentistStaffAdmin(admin.ModelAdmin):
-    def dentist_name(self, obj):
+    def dentist_name(self, obj: DentistStaff) -> str:
         role = "Dentist"
         if not obj.is_dentist:
             role = "Dentist Assistant"
         return f"{role} {obj.worker.user.get_full_name()}"
     dentist_name.short_description = "Name"
 
-    def dentist_role(self, obj):
+    def dentist_role(self, obj: DentistStaff) -> str:
         if not obj.is_dentist:
             return "Dentist Assistant"
         return "Dentist"
@@ -52,11 +52,11 @@ class DentistStaffAdmin(admin.ModelAdmin):
 
 @admin.register(ManagementStaff)
 class ManagementStaffAdmin(admin.ModelAdmin):
-    def management_name(self, obj):
+    def management_name(self, obj: ManagementStaff) -> str:
         return obj.worker.user.get_full_name()
     management_name.short_description = "Name"
 
-    def management_roles(self, obj):
+    def management_roles(self, obj: ManagementStaff) -> str:
         roles = []
         if obj.is_hr: roles.append("HR")
         if obj.is_financial: roles.append("Financial")
@@ -119,11 +119,11 @@ class InaccessibilityAdmin(admin.ModelAdmin):
 
 @admin.register(Employment)
 class EmploymentAdmin(admin.ModelAdmin):
-    def employee_contract(self, obj):
+    def employee_contract(self, obj: Employment) -> str:
         return f"{obj.new_employee.user.get_full_name()}'s contract"
     employee_contract.short_description = "Employee's contract"
 
-    def actual_contract(self, obj):
+    def actual_contract(self, obj: Employment) -> str:
         if obj and obj.pk:
             return format_html(f'<a href="{obj.contract_scan.url}" target="_blank">Click here</a>')
         return "-"
@@ -149,7 +149,7 @@ class EmploymentAdmin(admin.ModelAdmin):
 
 @admin.register(Bonus)
 class BonusAdmin(admin.ModelAdmin):
-    def bonus_name(self, obj):
+    def bonus_name(self, obj: Bonus) -> str:
         return f"{obj.worker.user.get_full_name()}'s bonus at {obj.bonus_date}"
     bonus_name.short_description = "Overview"
 
@@ -174,7 +174,7 @@ class ResourceAdmin(admin.ModelAdmin):
 
 @admin.register(ResourcesUpdate)
 class ResourcesUpdateAdmin(admin.ModelAdmin):
-    def overview(self, obj):
+    def overview(self, obj: ResourcesUpdate) -> str:
         status = "removed"
         if obj.is_newly_delivered:
             status = "added"

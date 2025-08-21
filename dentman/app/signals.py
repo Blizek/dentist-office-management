@@ -4,7 +4,7 @@ from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
 
 from dentman.app.models import User, Attachment, get_profile_photo_upload_path
-from dentman.utils import get_upload_path
+from dentman.utils import get_upload_path, delete_old_file
 
 @receiver(post_save, sender=User)
 def move_profile_photo(sender, instance, created, **kwargs):
@@ -23,7 +23,7 @@ def move_profile_photo(sender, instance, created, **kwargs):
 @receiver(pre_delete, sender=User)
 def delete_profile_photo(sender, instance, **kwargs):
     """Signal's function to delete user's profile photo when user is going to be deleted"""
-    instance.delete_profile_photo()
+    delete_old_file(instance.profile_photo)
 
 @receiver(post_save, sender=Attachment)
 def move_file(sender, instance, created, **kwargs):
@@ -42,4 +42,4 @@ def move_file(sender, instance, created, **kwargs):
 @receiver(pre_delete, sender=Attachment)
 def delete_file(sender, instance, **kwargs):
     """Signal's function to delete attachment file when attachment is going to be deleted"""
-    instance.delete_file()
+    delete_old_file(instance.file)

@@ -42,7 +42,7 @@ class AttachmentAdmin(admin.ModelAdmin):
         )
     ]
 
-    def file_link(self, obj):
+    def file_link(self, obj: Attachment) -> str:
         if obj and obj.pk:
             return format_html(f'<a href="https://dentman.pl/storage/{obj.file.name}" target="_blank">Click here</a>')
         return "-"
