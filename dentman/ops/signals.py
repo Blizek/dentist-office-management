@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from django.db.models import F
 
 from dentman.ops.models import Post, Visit, Discount
-from dentman.utils import get_upload_path
+from dentman.utils import get_upload_path, delete_old_file
 
 @receiver(post_save, sender=Post)
 def move_main_photo(sender, instance, created, **kwargs):
@@ -28,7 +28,7 @@ def delete_main_photo(sender, instance, **kwargs):
     """
     Delete main photo of post if post is going to be deleted
     """
-    instance.delete_main_photo()
+    delete_old_file(instance.main_photo)
 
 @receiver(m2m_changed, sender=Visit.discounts.through)
 def visit_discounts_changed(sender, instance, action, pk_set, **kwargs):
@@ -51,5 +51,14 @@ def visit_discounts_changed(sender, instance, action, pk_set, **kwargs):
 
     instance.calculate_final_price()
     instance.save(update_fields=['final_price'])
+
+@receiver(post_save, sender=Discount)
+def remove_promo_code_for_non_promo_code_discount(sender, instance, created, **kwargs):
+    """
+    Signal to remove value from `promotion_code` field of discount when type of discount isn't `promo_code`
+    """
+    if instance.promotion_code and instance.discount_type != 'promo_code':
+        instance.promotion_code = None
+        instance.save(update_fields=['promotion_code'])
 
 

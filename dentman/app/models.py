@@ -11,7 +11,7 @@ from django.conf import settings
 
 from dentman.storage import CustomFileSystemStorage
 from dentman.utils import get_upload_path, delete_old_file
-from dentman.app.mixins import CreatedUpdatedMixin
+from dentman.app.mixins import CreatedUpdatedMixin, FullCleanMixin
 
 storage_user = CustomFileSystemStorage(location=settings.STORAGE_ROOT / 'users-prof-photo', base_url=f"/app/profile-photos")
 storage = CustomFileSystemStorage()
@@ -32,8 +32,18 @@ def get_profile_photo_upload_path(instance: models.Model, filename: str) -> str:
     return f"{d}/{filename}"
 
 
-class User(AbstractUser, CreatedUpdatedMixin):
-    """User model class"""
+class User(AbstractUser, CreatedUpdatedMixin, FullCleanMixin):
+    """
+    User model class. It overrides AbstractUser and has additional fields:
+    1) eid - additional unique id for field (isn't primary key)
+    2) phone_number - CharField for user's phone number
+    3) profile_photo - user profile's image
+    4) is_patient - Boolean for patient status
+    5) is_worker - Boolean for worker status
+    6) is_dentist - Boolean for dentist status
+    7) is_dev - Boolean for dev status
+    8) additional_info - TextField with additonal information about user
+    """
     eid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     phone_number = models.CharField("Phone number", max_length=20, blank=True, null=True)
     profile_photo = models.ImageField("Profile photo", upload_to=get_profile_photo_upload_path, storage=storage_user, blank=True, null=True)
@@ -51,8 +61,13 @@ class User(AbstractUser, CreatedUpdatedMixin):
         super().save(*args, **kwargs)
 
 
-class Attachment(CreatedUpdatedMixin):
-    """Attachment model class"""
+class Attachment(CreatedUpdatedMixin, FullCleanMixin):
+    """
+    Attachment model class. Contains fields:
+    1) file - FileField with attachment file
+    2) is_active - Boolean for active status
+    3) additional_info - TextField with additional information about attachment
+    """
     file = models.FileField("File", upload_to=get_upload_path, storage=storage, blank=False, null=False, validators=[file_extension_validator])
     is_active = models.BooleanField("Is active", default=True)
     additional_info = models.TextField("Additional information", blank=True, null=True)
@@ -65,8 +80,14 @@ class Attachment(CreatedUpdatedMixin):
         return f"Attachment {os.path.basename(self.file.name)}"
 
 
-class AttachmentEntity(CreatedUpdatedMixin):
-    """ManyToMany model between attachments and another models"""
+class AttachmentEntity(CreatedUpdatedMixin, FullCleanMixin):
+    """
+    ManyToMany model between attachments and another models. Fields are:
+    1) attachment - Attachment model foreign key
+    2) content_type - ContentType model foreign key
+    3) object_id - PositiveIntegerField with id of object that this attachment belongs to
+    4) content_object - GenericForeignKey with object that this attachment belongs to
+    """
     attachment = models.ForeignKey(Attachment, on_delete=models.CASCADE, verbose_name="Attachment", null=False, blank=False)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, verbose_name="Content type", null=False, blank=False)
     object_id = models.PositiveIntegerField(verbose_name="Object ID", null=False, blank=False)
@@ -92,8 +113,13 @@ class AttachmentEntity(CreatedUpdatedMixin):
             return attachment_info
 
 
-class Metrics(CreatedUpdatedMixin):
-    """Model to describe all possible types of metrics"""
+class Metrics(CreatedUpdatedMixin, FullCleanMixin):
+    """
+    Model to describe all possible types of metrics. Fields:
+    1) measurement_type - one of three measurement types: Length, Weight, Amount. Field is PositiveSmallIntegerField.
+    2) measurement_name - name of measurement
+    3) measurement_name_shortcut - short name of measurement
+    """
     MEASUREMENT_TYPES = (
         (1, "Length"),
         (2, "Weight"),

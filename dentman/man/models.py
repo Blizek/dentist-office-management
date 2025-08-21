@@ -7,7 +7,7 @@ from django.core.validators import FileExtensionValidator
 from django.utils import timezone
 from django.conf import settings
 
-from dentman.app.mixins import CreatedUpdatedMixin
+from dentman.app.mixins import CreatedUpdatedMixin, FullCleanMixin
 from dentman.storage import CustomFileSystemStorage
 from dentman.utils import get_upload_path, delete_old_file
 from dentman.app.models import Metrics
@@ -19,7 +19,7 @@ storage = CustomFileSystemStorage(
 )
 pdf_extension_validator = FileExtensionValidator(["pdf"])
 
-class Worker(CreatedUpdatedMixin):
+class Worker(CreatedUpdatedMixin, FullCleanMixin):
     """
     Model to describe all type of workers in office. Fields are:
     1) `user` - OneToOneField to model `app.User`
@@ -48,7 +48,7 @@ class Worker(CreatedUpdatedMixin):
         super().save(*args, **kwargs)
 
 
-class DentistStaff(CreatedUpdatedMixin):
+class DentistStaff(CreatedUpdatedMixin, FullCleanMixin):
     """
     Model to describe all workers related with dentist staff. Model has fields:
     1) `worker` - OneToOneField to model `man.Worker`
@@ -71,7 +71,7 @@ class DentistStaff(CreatedUpdatedMixin):
         return f"{self.worker.user.get_full_name()} at position {position}"
 
 
-class ManagementStaff(CreatedUpdatedMixin):
+class ManagementStaff(CreatedUpdatedMixin, FullCleanMixin):
     """
     Model for all office management workers. Fields:
     1) `worker` - OneToOneField to model `man.Worker`
@@ -99,7 +99,7 @@ class ManagementStaff(CreatedUpdatedMixin):
         return f"{self.worker.user.get_full_name()} with {roles_as_text} permissions"
 
 
-class WorkersAvailability(CreatedUpdatedMixin):
+class WorkersAvailability(CreatedUpdatedMixin, FullCleanMixin):
     """
     Model to describe all office workers schedule availability. Fields:
     1) `worker` - OneToOneField to model `man.Worker`
@@ -129,8 +129,16 @@ class WorkersAvailability(CreatedUpdatedMixin):
     def __str__(self):
         return f"{self.worker.user.get_full_name()} availability on {self.get_weekday_display()} since {self.since} to {self.until}"
 
+    def clean(self):
+        super().clean()
 
-class SpecialAvailability(CreatedUpdatedMixin):
+        if self.until < self.since:
+            raise ValidationError({
+                "until": "Until time has to later than since"
+            })
+
+
+class SpecialAvailability(CreatedUpdatedMixin, FullCleanMixin):
     """
     Model to describe special availabilities i.e. when have to that day work shorter than normally. Fields are:
     1) `worker` - OneToOneField to model `man.Worker`
@@ -152,8 +160,16 @@ class SpecialAvailability(CreatedUpdatedMixin):
     def __str__(self):
         return f"{self.worker.user.get_full_name()} special availability at {self.date} since {self.since} to {self.until}"
 
+    def clean(self):
+        super().clean()
 
-class Inaccessibility(CreatedUpdatedMixin):
+        if self.until < self.since:
+            raise ValidationError({
+                "until": "Until time has to later than since"
+            })
+
+
+class Inaccessibility(CreatedUpdatedMixin, FullCleanMixin):
     """
     Model for inaccessibility. Fields:
     1) `worker` - OneToOneField to model `man.Worker`
@@ -183,21 +199,33 @@ class Inaccessibility(CreatedUpdatedMixin):
             return f"{self.worker.user.get_full_name()} inaccessible at {self.date}"
         return f"{self.worker.user.get_full_name()} inaccessible at {self.date} since {self.since} to {self.until}"
 
-    def save(self, *args, **kwargs):
+    def clean(self):
+        super().clean()
+
         # if flag `is_whole_day` is not selected and both `since` and `until` are empty raise error
         if not self.is_whole_day and not self.since and not self.until:
-            raise ValidationError("If inaccessibility is not for whole day please type since when util when is inaccessibility")
+            raise ValidationError({
+                "since": "If inaccessibility is not for whole day please type since when util when is inaccessibility",
+                "until": "If inaccessibility is not for whole day please type since when util when is inaccessibility"
+            })
         # if flag `is_whole_day` is not selected and `since` is empty raise error
         if not self.is_whole_day and not self.since:
-            raise ValidationError("Please type until when is inaccessibility")
+            raise ValidationError({
+                "since": "Please type until when is inaccessibility"
+            })
         # if flag `is_whole_day` is not selected and `until` is empty raise error
         if not self.is_whole_day and not self.until:
-            raise ValidationError("Please type until when is inaccessibility")
+            raise ValidationError({
+                "until": "Please type until when is inaccessibility"
+            })
+        # if flag `is_whole_day` is False and `until` is earlier than `since`
+        if not self.is_whole_day and self.until < self.since:
+            raise ValidationError({
+                "until": "Until time has to later than since"
+            })
 
-        super().save(*args, **kwargs)
 
-
-class Employment(CreatedUpdatedMixin):
+class Employment(CreatedUpdatedMixin, FullCleanMixin):
     """
     Model describing contract details between office and employees. Model has fields:
     1) `new_employee` - foreign key to `man.Worker` model; new employee in office
@@ -264,7 +292,7 @@ class Employment(CreatedUpdatedMixin):
             )
 
 
-class Bonus(CreatedUpdatedMixin):
+class Bonus(CreatedUpdatedMixin, FullCleanMixin):
     """
     Model with bonuses for employees. Model has fields:
     1) `worker` - foreign key to `man.Worker` model; employee that received bonus
@@ -287,7 +315,7 @@ class Bonus(CreatedUpdatedMixin):
         return f"Bonus for {self.worker.user.get_full_name()} ({self.bonus_amount} PLN)"
 
 
-class Resource(CreatedUpdatedMixin):
+class Resource(CreatedUpdatedMixin, FullCleanMixin):
     """
     Model with resources in office. Has fields:
     1) `resource_name` - name of resource
@@ -307,7 +335,7 @@ class Resource(CreatedUpdatedMixin):
         return f"{self.resource_name} - {self.actual_amount:.7f}{self.default_metric.measurement_name_shortcut}"
 
 
-class ResourcesUpdate(CreatedUpdatedMixin):
+class ResourcesUpdate(CreatedUpdatedMixin, FullCleanMixin):
     """
     Model to describe all updates of resource amount. Fields are:
     1) `resource` - foreign key to `man.Resource` model
@@ -333,10 +361,8 @@ class ResourcesUpdate(CreatedUpdatedMixin):
         return f"{self.resource.resource_name}'s update: {self.amount_change}{self.metric.measurement_name_shortcut} {status}"
 
     def save(self, *args, **kwargs):
-        if not self.is_newly_delivered and self.resource.actual_amount < self.amount_change:
-            raise ValidationError({
-                "amount_change": "You can't use more resource than you have"
-            })
+        # first validate if all values are correct, then update the resource
+        super().save(*args, **kwargs)
 
         if not self.is_newly_delivered:
             self.resource.actual_amount -= self.amount_change
@@ -344,5 +370,11 @@ class ResourcesUpdate(CreatedUpdatedMixin):
             self.resource.actual_amount += self.amount_change
         self.resource.save()
 
-        super().save(*args, **kwargs)
+    def clean(self):
+        super().clean()
+
+        if not self.is_newly_delivered and self.resource.actual_amount < self.amount_change:
+            raise ValidationError({
+                "amount_change": "You can't use more resource than you have"
+            })
 
