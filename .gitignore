@@ -219,3 +219,4 @@ etc/nginx/ssl-*.pem
 *.pem
 venv/
 .DS_Store
+logs/

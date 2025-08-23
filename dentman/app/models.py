@@ -1,9 +1,10 @@
 import os
 import uuid
+import re
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, ValidationError
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.apps import apps
@@ -16,6 +17,7 @@ from dentman.app.mixins import CreatedUpdatedMixin, FullCleanMixin
 storage_user = CustomFileSystemStorage(location=settings.STORAGE_ROOT / 'users-prof-photo', base_url=f"/app/profile-photos")
 storage = CustomFileSystemStorage()
 file_extension_validator = FileExtensionValidator(['pdf', 'jpg', 'png', 'mp4'])
+phone_number_regex = r"^\+?[1-9]\d{0,2}[\d\s\-()]{4,14}$"
 
 def get_profile_photo_upload_path(instance: models.Model, filename: str) -> str:
     """
@@ -42,7 +44,7 @@ class User(AbstractUser, CreatedUpdatedMixin, FullCleanMixin):
     5) is_worker - Boolean for worker status
     6) is_dentist - Boolean for dentist status
     7) is_dev - Boolean for dev status
-    8) additional_info - TextField with additonal information about user
+    8) additional_info - TextField with additional information about user
     """
     eid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     phone_number = models.CharField("Phone number", max_length=20, blank=True, null=True)
@@ -59,6 +61,14 @@ class User(AbstractUser, CreatedUpdatedMixin, FullCleanMixin):
             if self.profile_photo != actual_photo: # if new profile photo has been uploaded delete old one and upload a new one
                 delete_old_file(actual_photo)
         super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+
+        if not re.match(phone_number_regex, self.phone_number):
+            raise ValidationError({
+                "phone_number": "Invalid phone number format"
+            })
 
 
 class Attachment(CreatedUpdatedMixin, FullCleanMixin):
