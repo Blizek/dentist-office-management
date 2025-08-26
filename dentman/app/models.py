@@ -47,7 +47,7 @@ class User(AbstractUser, CreatedUpdatedMixin, FullCleanMixin):
     8) additional_info - TextField with additional information about user
     """
     eid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    phone_number = models.CharField("Phone number", max_length=20, blank=True, null=True)
+    phone_number = models.CharField("Phone number", max_length=16, blank=True, null=True)
     profile_photo = models.ImageField("Profile photo", upload_to=get_profile_photo_upload_path, storage=storage_user, blank=True, null=True)
     is_patient = models.BooleanField("Is patient", default=True)
     is_worker = models.BooleanField("Is worker", default=False)
@@ -65,10 +65,11 @@ class User(AbstractUser, CreatedUpdatedMixin, FullCleanMixin):
     def clean(self):
         super().clean()
 
-        if not re.match(phone_number_regex, self.phone_number):
-            raise ValidationError({
-                "phone_number": "Invalid phone number format"
-            })
+        if self.phone_number:
+            if not re.match(phone_number_regex, self.phone_number):
+                raise ValidationError({
+                    "phone_number": "Invalid phone number format"
+                })
 
 
 class Attachment(CreatedUpdatedMixin, FullCleanMixin):
