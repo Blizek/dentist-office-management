@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DJANGO_SETTINGS_MODULE: dentman.settings.dev
       PYTHONUNBUFFERED: "1"
+      DJANGO_SETTINGS_MODULE: dentman.settings.dev
 
     steps:
       - name: Checkout repository
@@ -40,11 +40,22 @@ jobs:
         run: |
           poetry install --no-interaction --no-ansi
 
-      - name: Show environment
+      - name: Create .env file for CI
         run: |
-          poetry --version
-          poetry run python --version
-          poetry run pip list
+          echo "ENV=dev" > .env
+          echo "DEBUG=1" >> .env
+          echo "SECRET_KEY=dummy-secret-key-for-tests-only" >> .env
+          echo "DJANGO_SETTINGS_MODULE=dentman.settings.dev" >> .env
+          echo "DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]" >> .env
+          echo "DATABASE_URL=sqlite:///db.sqlite3" >> .env
+          echo "SQL_ENGINE=django.db.backends.sqlite3" >> .env
+          echo "COMPOSE_PROJECT_NAME=dentman" >> .env
+          echo "DJANGO_SMSAPI_TOKEN=" >> .env
+          echo "POSTGRES_USER=dummy" >> .env
+          echo "POSTGRES_PASSWORD=dummy" >> .env
+          echo "POSTGRES_DB=dummy" >> .env
+          echo "SQL_HOST=localhost" >> .env
+          echo "SQL_PORT=5432" >> .env
 
       - name: Run tests
         run: |
