@@ -1,6 +1,7 @@
 import uuid
 import datetime
 from decimal import Decimal
+from math import ceil
 
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -10,7 +11,7 @@ from django.core.exceptions import ValidationError
 
 from dentman.app.mixins import CreatedUpdatedMixin, FullCleanMixin
 from dentman.storage import CustomFileSystemStorage
-from dentman.utils import get_upload_path, delete_old_file
+from dentman.utils import get_upload_path_with_class, delete_old_file, get_upload_path
 
 from tinymce.models import HTMLField
 
@@ -193,7 +194,9 @@ class Discount(CreatedUpdatedMixin, FullCleanMixin):
 
     def check_limits(self):
         """Check if discount hasn't reached its limit of usage"""
-        if self.is_limited and self.limit_value <= self.used_counter:
+        current_limit = self.limit_value if self.limit_value is not None else 0
+        
+        if self.is_limited and current_limit <= self.used_counter:
             return False, "Discount's limit has been reached"
         return True, ""
 
@@ -254,6 +257,7 @@ class Visit(CreatedUpdatedMixin, FullCleanMixin):
             decimal_discount_percent = Decimal(discount.percent)
             multiplier = Decimal(1) - decimal_discount_percent / Decimal(100)
             current_final_price *= multiplier
+            current_final_price = ceil((current_final_price * 100)) / Decimal(100)
 
         self.final_price = current_final_price
 
@@ -281,7 +285,7 @@ class Post(CreatedUpdatedMixin, FullCleanMixin):
     """
     title = models.CharField("Title", max_length=500, unique=True)
     slug = models.SlugField("Slug", max_length=500, unique=True)
-    main_photo = models.ImageField("Main photo", upload_to=get_upload_path, storage=storage, null=True,
+    main_photo = models.ImageField("Main photo", upload_to=get_upload_path_with_class, storage=storage, null=True,
                                    help_text="Main photo that will show up on the lists of posts and the main photo at the post")
     text_html = HTMLField("Text html", help_text="Blog's text written in HTML format")
     visit_counter = models.IntegerField("Visit counter", default=0)

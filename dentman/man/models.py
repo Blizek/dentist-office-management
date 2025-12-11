@@ -3,7 +3,7 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.utils import timezone
 from django.conf import settings
 
@@ -303,7 +303,9 @@ class Bonus(CreatedUpdatedMixin, FullCleanMixin):
     """
     worker = models.ForeignKey(Worker, verbose_name="Worker", on_delete=models.CASCADE)
     management_staff = models.ForeignKey(ManagementStaff, verbose_name="Management staff", on_delete=models.CASCADE)
-    bonus_amount = models.DecimalField("Bonus amount", max_digits=10, decimal_places=2, blank=False, null=False)
+    bonus_amount = models.DecimalField("Bonus amount", max_digits=10, decimal_places=2, blank=False, null=False, validators=[
+        # bonus amount has to be positive number
+        MinValueValidator(0)])
     bonus_date = models.DateField("Bonus date", blank=False, null=False)
     bonus_reason = models.TextField("Bonus reason", blank=True)
 

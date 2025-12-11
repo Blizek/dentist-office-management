@@ -31,7 +31,7 @@ def move_file(sender, instance, created, **kwargs):
     if instance.file and 'temp' in instance.file.name:
         old_name = instance.file.name
         filename = os.path.basename(old_name)
-        new_name = get_upload_path(instance, filename)
+        new_name = get_upload_path(instance, filename, True)
         if old_name != new_name:
             file = instance.file.storage.open(old_name)
             instance.file.storage.save(new_name, file)

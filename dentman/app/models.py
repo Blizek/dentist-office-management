@@ -11,7 +11,7 @@ from django.apps import apps
 from django.conf import settings
 
 from dentman.storage import CustomFileSystemStorage
-from dentman.utils import get_upload_path, delete_old_file
+from dentman.utils import get_upload_path_with_class, delete_old_file, get_upload_path
 from dentman.app.mixins import CreatedUpdatedMixin, FullCleanMixin
 
 storage_user = CustomFileSystemStorage(location=settings.STORAGE_ROOT / 'users-prof-photo', base_url=f"/app/profile-photos")
@@ -79,7 +79,8 @@ class Attachment(CreatedUpdatedMixin, FullCleanMixin):
     2) is_active - Boolean for active status
     3) additional_info - TextField with additional information about attachment
     """
-    file = models.FileField("File", upload_to=get_upload_path, storage=storage, blank=False, null=False, validators=[file_extension_validator])
+    file = models.FileField("File", upload_to=get_upload_path_with_class, storage=storage, blank=False, null=False,
+                            validators=[file_extension_validator])
     is_active = models.BooleanField("Is active", default=True)
     additional_info = models.TextField("Additional information", blank=True, null=True)
 

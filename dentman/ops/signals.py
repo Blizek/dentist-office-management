@@ -15,7 +15,7 @@ def move_main_photo(sender, instance, created, **kwargs):
     if instance.main_photo and 'temp' in instance.main_photo.name:
         old_name = instance.main_photo.name
         filename = os.path.basename(old_name)
-        new_name = get_upload_path(instance, filename)
+        new_name = get_upload_path(instance, filename, True)
         if old_name != new_name:
             file = instance.main_photo.storage.open(old_name)
             instance.main_photo.storage.save(new_name, file)

@@ -293,7 +293,7 @@ shell_plus: .env
 	$(MANAGE) shell_plus
 
 tests: .env
-	$(DOCO) exec -it app bash -c "pytest"
+	$(DOCO) exec -it app bash -c "pytest $(ARGS)"
 
 etc/nginx.conf: export NGINX_CONF_BODY:=$(NGINX_CONF_BODY)
 etc/nginx.conf: .env

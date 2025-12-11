@@ -27,7 +27,15 @@ def get_upload_path(instance: Model, filename: str, with_class_name: bool=False)
         d = 'temp'
     if with_class_name:
         return f"{instance.__class__.__name__}/{d}/{filename}"
-    return f"/{d}/{filename}"
+    return f"{d}/{filename}"
+
+def get_upload_path_with_class(instance: Model, filename: str) -> str:
+    """
+    Calls get_upload_path with with_class_name=True to be used in model fields.
+    This avoids using a lambda function which cannot be serialized by migrations.
+    """
+    return get_upload_path(instance, filename, with_class_name=True)
+
 
 def delete_old_file(old_file: FieldFile) -> None:
     """
