@@ -24,7 +24,7 @@ SQL_HOST     := $(SQL_HOST_ENV)
 SQL_PORT     := $(SQL_PORT_ENV)
 BUILD_DATE   := $(DATE) $(TIME)
 CMPFILE      := docker-compose.yml
-VERSION      := $(shell poetry version -s)
+VERSION      := $(shell uv version --short)
 DOCO       	 := COMPOSE_PROJECT_NAME=${APP_NAME} RELEASE=$(VERSION) docker compose
 MANAGE       := $(DOCO) exec -it app ./manage.py
 #MANAGE      := ./manage.py
@@ -66,7 +66,6 @@ services:
     command: uvicorn $(APP_NAME).asgi:application --host 0.0.0.0 --port 8000 --reload --reload-include="*.html" --reload-include="*.css" --reload-include="*.js" --reload-include="*.json" --reload-include="*.toml" --reload-include="*.py"
     volumes:
      - .:/app
-     - ./etc/pypoetry-config.toml:/home/$(APP_NAME)/.config/pypoetry/config.toml
     env_file:
       - .env
     depends_on:
@@ -224,7 +223,8 @@ tag:
 
 next: export CMPFILE_BODY:=$(CMPFILE_BODY)
 next:
-	poetry version patch
+	uv add --dev bump-my-version
+	uv run bump-my-version bump patch
 	make $(CMPFILE)
 	make tag
 
@@ -235,8 +235,7 @@ $(CMPFILE): pyproject.toml
 env: export ENV_BODY:=$(ENV_BODY)
 env:
 	echo "$${ENV_BODY}" > .env
-	pip3 install poetry
-	poetry install
+	uv sync
 
 .env: export ENV_BODY:=$(ENV_BODY)
 .env: .env.local

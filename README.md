@@ -1,10 +1,10 @@
 # Dentman — Dentist Office Management
 
-Dentman is a Django-based system for managing a dental office: patients, staff, contracts, schedules, and content. It ships with a modern setup (Poetry, Docker, Nginx, GitHub Actions) and a clean modular structure.
+Dentman is a Django-based system for managing a dental office: patients, staff, contracts, schedules, and content. It ships with a modern setup (uv, Docker, Nginx, GitHub Actions) and a clean modular structure.
 
 **Highlights**
 - **Django 5**: Custom `User`, models for ops/man modules, forms, signals
-- **Poetry**: Reproducible dependency management
+- **uv**: Fast, reproducible dependency and Python manager
 - **Docker**: App + Nginx + Postgres compose for local/dev
 - **Static/Media**: Configured static/media/storage directories
 - **Tests**: `pytest` with Django, in-memory file storage in tests
@@ -19,19 +19,16 @@ Dentman is a Django-based system for managing a dental office: patients, staff, 
 
 ---
 
-**Quick Start (Local, SQLite + Poetry)**
+**Quick Start (Local, SQLite + uv)**
 
 Prerequisites:
 - Python 3.12+
-- Poetry
+- uv (package manager)
 
 1) Clone and enter the project directory
 ```bash
-mkdir dentman
-cd dentman
-mkdir app
-git clone git@github.com:Blizek/dentist-office-management.git app
-cd app
+git clone https://github.com/Blizek/dentist-office-management.git
+cd dentist-office-management/app
 ```
 
 2) Create local env file (minimal dev defaults)
@@ -42,14 +39,22 @@ printf "ENV=dev\nDEBUG=True\nSECRET_KEY=dev-secret-key\nDATABASE_URL=sqlite:///d
 
 3) Install dependencies and set up the DB
 ```bash
-poetry install
-poetry run python manage.py migrate
-poetry run python manage.py createsuperuser
+brew install uv               # macOS: install uv
+uv python install 3.12        # ensure Python 3.12 is available
+uv sync                       # create .venv and install deps
+uv run python manage.py migrate
+uv run python manage.py createsuperuser
+```
+Linux (alternative):
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv python install 3.12
+uv sync
 ```
 
 4) Run the development server
 ```bash
-poetry run python manage.py runserver 0.0.0.0:8000
+uv run python manage.py runserver 0.0.0.0:8000
 ```
 
 Open http://localhost:8000 and admin at http://localhost:8000/admin
@@ -90,6 +95,7 @@ Useful targets:
 - `make bash` — shell into app container
 - `make web` — shell into nginx container
 - `make down` — stop and remove containers
+- `make upd` — run stack in detached mode
 
 Nginx serves the app (proxy to Uvicorn) and public files from [pub](pub). Static and media roots are configured in settings.
 
@@ -118,17 +124,21 @@ For a full example of environment variables used by Docker compose and the Makef
 
 **Running Tests**
 ```bash
-poetry run pytest
+uv sync --group dev    # install dev dependencies (pytest, plugins)
+uv run pytest
 ```
 Notes:
 - Test discovery and Django settings come from [pytest.ini](pytest.ini)
 - File writes are redirected to memory during tests via fixtures in [conftest.py](conftest.py), so tests don’t litter the disk
+- CI runs tests against Postgres; locally you can use SQLite (default) or export `DATABASE_URL` to point to Postgres.
 
 ---
 
 **Continuous Integration**
 - GitHub Actions workflow: [.github/workflows/tests.yml](.github/workflows/tests.yml)
-- Triggers on push and PR, installs via Poetry, and runs `pytest`
+- Triggers on push and PR, installs via uv, and runs `pytest`
+
+Caching is enabled in CI; dependency sync uses `uv lock`/`uv sync` with the committed `uv.lock` file for reproducible installs.
 
 ---
 
@@ -137,10 +147,13 @@ Useful developer commands defined in [Makefile](Makefile):
 - `make env` — generate `.env` from `.env.local`
 - `make build` — build project
 - `make up` - run project
+- `make upd` - run project in background
 - `make migrate` / `make migrations` — database tasks
 - `make superuser` - create project's superuser
 - `make bash` / `make root` — shell into containers
 - `make tests` — run tests inside container (pass `ARGS="filename.py"` to tests only from passed file)
+
+Tip: The Dockerfile uses uv and the committed `uv.lock` for deterministic builds. Run `uv lock` when you change dependencies.
 
 ---
 

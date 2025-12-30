@@ -1,29 +1,41 @@
-# pull official base image
+FROM ghcr.io/astral-sh/uv:latest AS uv_bin
+
 FROM python:3.12-slim-bookworm
+
 ARG APP_UID
 ARG APP_GID
-ARG APP_USER
-# set work directory
+ARG APP_USER=dentman
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV UV_LINK_MODE=copy
+
+COPY --from=uv_bin /uv /uvx /bin/
+
 WORKDIR /app
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    netcat-openbsd \
+    libpq-dev \
+    build-essential \
+    libglib2.0-0 \
+    libpangocairo-1.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 
-# install system dependencies
-RUN apt-get update && apt-get install -y netcat-openbsd libpq-dev build-essential libglib2.0-0 libpangocairo-1.0-0
-RUN /usr/local/bin/python -m pip install --upgrade pip
-RUN /usr/local/bin/pip install poetry
-RUN groupadd ${APP_USER}
-RUN useradd -m -s /bin/bash -g ${APP_USER} ${APP_USER}
+RUN getent group ${APP_GID} || groupadd -g ${APP_GID} ${APP_USER} \
+ && useradd -m -u ${APP_UID} -g ${APP_GID} -s /bin/bash ${APP_USER}
+
+COPY pyproject.toml uv.lock ./
+
+RUN uv sync --frozen --no-cache --no-install-project
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 COPY . .
-RUN /bin/true\
-    && poetry config virtualenvs.create false \
-    && poetry install --no-interaction \
-    && rm -rf /root/.cache/pypoetry
-# RUN poetry install
-USER ${APP_USER}
-COPY ./entry.sh .
 
+RUN chown -R ${APP_UID}:${APP_GID} /app
+
+USER ${APP_USER}
+
+RUN chmod +x /app/entry.sh
 ENTRYPOINT ["/app/entry.sh"]
