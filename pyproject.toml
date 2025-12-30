@@ -1,29 +1,33 @@
-[tool.poetry]
+[project]
 name = "dentman"
-version = "1.0.0"
+version = "0.0.1"
 description = "Application to manage dentist office"
-authors = ["Błażej Naziemiec <blazej.naziemiec@gmail.com>"]
-license = "MIT license"
 readme = "README.md"
+requires-python = ">=3.12,<4.0"
+authors = [{ name = "Błażej Naziemiec", email = "blazej.naziemiec@gmail.com" }]
+license = { file = "LICENSE" }
+dependencies = [
+	"Django>=5.2.2,<6.0.0",
+	"psycopg2==2.9.6",
+	"gunicorn==20.1.0",
+	"uvicorn>=0.32.1,<0.33.0",
+	"django-extensions>=3.2.3,<4.0.0",
+	"django-environ>=0.11.2,<0.12.0",
+	"ipython>=8.18.1,<9.0.0",
+	"whitenoise>=6.8.0,<7.0.0",
+	"pip>=24.2,<25.0",
+	"pillow>=11.2.1,<12.0.0",
+	"beautifulsoup4>=4.13.4,<5.0.0",
+	"django-formtools>=2.5.1,<3.0.0",
+	"psycopg2-binary>=2.9.10,<3.0.0",
+	"django-tinymce>=4.1.0,<5.0.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-Django = "^5.2.2"
-psycopg2 = "2.9.6"
-gunicorn = "20.1.0"
-uvicorn = "^0.32.1"
-django_extensions = "^3.2.3"
-django-environ = "^0.11.2"
-ipython = "^8.18.1"
-whitenoise = "^6.8.0"
-pip = "^24.2"
-pillow = "^11.2.1"
-beautifulsoup4 = "^4.13.4"
-django-formtools = "^2.5.1"
-psycopg2-binary = "^2.9.10"
-django-tinymce = "^4.1.0"
-pytest-django = "^4.11.1"
+[tool.uv]
+dev-dependencies = [
+	"pytest-django>=4.11.1,<5.0.0",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
