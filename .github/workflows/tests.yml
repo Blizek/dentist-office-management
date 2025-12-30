@@ -8,55 +8,41 @@ on:
 
 jobs:
   pytest:
-    name: Run Django tests
+    name: Run tests
     runs-on: ubuntu-latest
 
-    env:
-      PYTHONUNBUFFERED: "1"
-      DJANGO_SETTINGS_MODULE: dentman.settings.dev
+    services:
+      db:
+        image: postgres:15
+        env:
+          POSTGRES_USER: dentman
+          POSTGRES_PASSWORD: dentman
+          POSTGRES_DB: dentman_test
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
+          enable-cache: true
           python-version: '3.12'
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libjpeg-dev zlib1g-dev libpq-dev gcc
+          sudo apt-get install -y libpq-dev gcc
 
       - name: Install dependencies
-        run: |
-          poetry install --no-interaction --no-ansi
-
-      - name: Create .env file for CI
-        run: |
-          echo "ENV=dev" > .env
-          echo "DEBUG=1" >> .env
-          echo "SECRET_KEY=dummy-secret-key-for-tests-only" >> .env
-          echo "DJANGO_SETTINGS_MODULE=dentman.settings.dev" >> .env
-          echo "DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]" >> .env
-          echo "DATABASE_URL=sqlite:///db.sqlite3" >> .env
-          echo "SQL_ENGINE=django.db.backends.sqlite3" >> .env
-          echo "COMPOSE_PROJECT_NAME=dentman" >> .env
-          echo "DJANGO_SMSAPI_TOKEN=" >> .env
-          echo "POSTGRES_USER=dummy" >> .env
-          echo "POSTGRES_PASSWORD=dummy" >> .env
-          echo "POSTGRES_DB=dummy" >> .env
-          echo "SQL_HOST=localhost" >> .env
-          echo "SQL_PORT=5432" >> .env
+        run: uv sync --group dev
 
       - name: Run tests
-        run: |
-          poetry run pytest --maxfail=1 --disable-warnings -q
+        env:
+          DATABASE_URL: postgresql://dentman:dentman@localhost:5432/dentman_test
+          DEBUG: "1"
+          SECRET_KEY: "dummy-key"
+          DJANGO_SETTINGS_MODULE: dentman.settings.dev
+        run: uv run pytest

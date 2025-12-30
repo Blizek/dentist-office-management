@@ -8,7 +8,6 @@ authors = [{ name = "Błażej Naziemiec", email = "blazej.naziemiec@gmail.com" }
 license = { file = "LICENSE" }
 dependencies = [
 	"Django>=5.2.2,<6.0.0",
-	"psycopg2==2.9.6",
 	"gunicorn==20.1.0",
 	"uvicorn>=0.32.1,<0.33.0",
 	"django-extensions>=3.2.3,<4.0.0",

@@ -78,7 +78,6 @@ dependencies = [
     { name = "ipython" },
     { name = "pillow" },
     { name = "pip" },
-    { name = "psycopg2" },
     { name = "psycopg2-binary" },
     { name = "uvicorn" },
     { name = "whitenoise" },
@@ -101,7 +100,6 @@ requires-dist = [
     { name = "ipython", specifier = ">=8.18.1,<9.0.0" },
     { name = "pillow", specifier = ">=11.2.1,<12.0.0" },
     { name = "pip", specifier = ">=24.2,<25.0" },
-    { name = "psycopg2", specifier = "==2.9.6" },
     { name = "psycopg2-binary", specifier = ">=2.9.10,<3.0.0" },
     { name = "uvicorn", specifier = ">=0.32.1,<0.33.0" },
     { name = "whitenoise", specifier = ">=6.8.0,<7.0.0" },
@@ -377,12 +375,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/a1/96/06e01a7b38dce6fe1
 wheels = [
     { url = "https://files.pythonhosted.org/packages/84/03/0d3ce49e2505ae70cf43bc5bb3033955d2fc9f932163e84dc0779cc47f48/prompt_toolkit-3.0.52-py3-none-any.whl", hash = "sha256:9aac639a3bbd33284347de5ad8d68ecc044b91a762dc39b7c21095fcd6a19955", size = 391431, upload-time = "2025-08-27T15:23:59.498Z" },
 ]
-
-[[package]]
-name = "psycopg2"
-version = "2.9.6"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/af/c4/5726cddb53fe52f0e839eb3da04322364f14493217ebd5818cc5e4c948a5/psycopg2-2.9.6.tar.gz", hash = "sha256:f15158418fd826831b28585e2ab48ed8df2d0d98f502a2b4fe619e7d5ca29011", size = 383979, upload-time = "2023-04-03T11:36:37.244Z" }
 
 [[package]]
 name = "psycopg2-binary"
