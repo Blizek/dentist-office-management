@@ -27,8 +27,11 @@ Prerequisites:
 
 1) Clone and enter the project directory
 ```bash
-git clone https://github.com/Blizek/dentist-office-management.git
-cd dentist-office-management/app
+mkdir dentman
+cd dentman
+mkdir app
+git clone git@github.com:Blizek/dentist-office-management.git app
+cd app
 ```
 
 2) Create local env file (minimal dev defaults)
@@ -37,19 +40,13 @@ cp .env.local .env || true
 printf "ENV=dev\nDEBUG=True\nSECRET_KEY=dev-secret-key\nDATABASE_URL=sqlite:///db.sqlite3\n" > .env
 ```
 
-3) Install dependencies and set up the DB
+3) Install dependencies and set up the DB\
+Tutorial how to install `uv` on your device is [here](https://docs.astral.sh/uv/getting-started/installation/)
 ```bash
-brew install uv               # macOS: install uv
-uv python install 3.12        # ensure Python 3.12 is available
-uv sync                       # create .venv and install deps
+uv python install 3.12        
+uv sync                      
 uv run python manage.py migrate
 uv run python manage.py createsuperuser
-```
-Linux (alternative):
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv python install 3.12
-uv sync
 ```
 
 4) Run the development server
@@ -95,7 +92,6 @@ Useful targets:
 - `make bash` — shell into app container
 - `make web` — shell into nginx container
 - `make down` — stop and remove containers
-- `make upd` — run stack in detached mode
 
 Nginx serves the app (proxy to Uvicorn) and public files from [pub](pub). Static and media roots are configured in settings.
 
@@ -138,8 +134,6 @@ Notes:
 - GitHub Actions workflow: [.github/workflows/tests.yml](.github/workflows/tests.yml)
 - Triggers on push and PR, installs via uv, and runs `pytest`
 
-Caching is enabled in CI; dependency sync uses `uv lock`/`uv sync` with the committed `uv.lock` file for reproducible installs.
-
 ---
 
 **Makefile Shortcuts**
@@ -147,13 +141,10 @@ Useful developer commands defined in [Makefile](Makefile):
 - `make env` — generate `.env` from `.env.local`
 - `make build` — build project
 - `make up` - run project
-- `make upd` - run project in background
 - `make migrate` / `make migrations` — database tasks
 - `make superuser` - create project's superuser
 - `make bash` / `make root` — shell into containers
 - `make tests` — run tests inside container (pass `ARGS="filename.py"` to tests only from passed file)
-
-Tip: The Dockerfile uses uv and the committed `uv.lock` for deterministic builds. Run `uv lock` when you change dependencies.
 
 ---
 
