@@ -62,4 +62,4 @@ jobs:
           DEBUG: "1"
           SECRET_KEY: "dummy-key"
           DJANGO_SETTINGS_MODULE: dentman.settings.dev
-        run: uv run pytest
+        run: uv run pytest --maxfail=1 --disable-warnings -q
