@@ -23,7 +23,7 @@ class Category(CreatedUpdatedMixin, FullCleanMixin):
     """
     Database model for the tree of categories to build nicely divided services into subcategories. Fields:
     1) name - category name
-    2) parent - foreign key to self to determine parent category for this cateogry
+    2) parent - foreign key to self to determine parent category for this category
     """
     name = models.CharField("Category name", max_length=255, unique=True)
     parent = models.ForeignKey(

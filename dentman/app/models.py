@@ -38,20 +38,34 @@ class User(AbstractUser, CreatedUpdatedMixin, FullCleanMixin):
     """
     User model class. It overrides AbstractUser and has additional fields:
     1) eid - additional unique id for field (isn't primary key)
-    2) phone_number - CharField for user's phone number
-    3) profile_photo - user profile's image
-    4) is_patient - Boolean for patient status
-    5) is_worker - Boolean for worker status
-    6) is_dentist - Boolean for dentist status
-    7) is_dev - Boolean for dev status
-    8) additional_info - TextField with additional information about user
+    2) birth_date - date of birth
+    3) phone_number - CharField for user's phone number
+    4) is_adult - Boolean if user is adult
+    5) profile_photo - user profile's image
+    6) is_patient - Boolean for patient status
+    7) is_worker - Boolean for worker status
+    8) is_dentist_staff - Boolean if user is with dentist staff status
+    9) is_dentist - Boolean for dentist status
+    10) is_dentist_assistant - Boolean for dentist assistant status
+    11) is_management_staff - Boolean if user is management staff status
+    12) is_hr - Boolean for hr status
+    13) is_financial - Boolean for financial status
+    14) is_dev - Boolean for dev status
+    15) additional_info - TextField with additional information about user
     """
     eid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    birth_date = models.DateField("Birth date", blank=True, null=True)
     phone_number = models.CharField("Phone number", max_length=16, blank=True, null=True)
     profile_photo = models.ImageField("Profile photo", upload_to=get_profile_photo_upload_path, storage=storage_user, blank=True, null=True)
+    is_adult = models.BooleanField("Is adult", default=False)
     is_patient = models.BooleanField("Is patient", default=True)
     is_worker = models.BooleanField("Is worker", default=False)
+    is_dentist_staff = models.BooleanField("Is dentist staff", default=False)
     is_dentist = models.BooleanField("Is dentist", default=False)
+    is_dentist_assistant = models.BooleanField("Is dentist assistant", default=False)
+    is_management_staff = models.BooleanField("Is management staff", default=False)
+    is_hr = models.BooleanField("Is HR", default=False)
+    is_financial = models.BooleanField("Is financial", default=False)
     is_dev = models.BooleanField("Is developer", default=False)
     additional_info = models.TextField("Additional information", blank=True, null=True)
 
@@ -65,10 +79,40 @@ class User(AbstractUser, CreatedUpdatedMixin, FullCleanMixin):
     def clean(self):
         super().clean()
 
+        # check if phone number is in correct form
         if self.phone_number:
             if not re.match(phone_number_regex, self.phone_number):
                 raise ValidationError({
                     "phone_number": "Invalid phone number format"
+                })
+
+        # check if both flag is_dentist_staff and (is_dentist or is_dentist_assistant) are set
+        if self.is_dentist_staff and not (self.is_dentist or self.is_dentist_assistant):
+            raise ValidationError({
+                "is_dentist": "Check this or 'Is dentist assistant' checkbox",
+                "is_dentist_assistant": "Check this or 'Is dentist' checkbox",
+            })
+        if (self.is_dentist or self.is_dentist_assistant) and not self.is_dentist_staff:
+            raise ValidationError({
+                "is_dentist_staff": "User is not set to be in dentist staff",
+            })
+
+        # check if both flag is_management_staff and (is_hr or is_financial) are set
+        if self.is_management_staff and not (self.is_hr or self.is_financial):
+            raise ValidationError({
+                "is_hr": "Check this or 'Is financial' checkbox",
+                "is_financial": "Check this or 'Is hr' checkbox",
+            })
+        if (self.is_hr or self.is_financial) and not self.is_management_staff:
+            raise ValidationError({
+                "is_management_staff": "User is not set to be in management staff",
+            })
+
+        # check if flag is_worker is set when another flag connected with dentist/hr/financial staff is set
+        if self.is_dentist_staff or self.is_management_staff:
+            if not self.is_worker:
+                raise ValidationError({
+                    "is_worker": "This user is not a worker but has a dentist/management flag set"
                 })
 
 

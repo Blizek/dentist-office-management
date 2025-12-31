@@ -52,23 +52,34 @@ class DentistStaff(CreatedUpdatedMixin, FullCleanMixin):
     """
     Model to describe all workers related with dentist staff. Model has fields:
     1) `worker` - OneToOneField to model `man.Worker`
-    2) `is_dentist` - boolean value if worker is dentist or dentist assistant 
+    2) `is_dentist` - boolean value if worker is dentist
+    3) `is_dentist_assistant` - boolean value if worker is dentist assistant
     """
     worker = models.OneToOneField(Worker, verbose_name="Worker", on_delete=models.CASCADE)
-    is_dentist = models.BooleanField("Is dentist", default=False,
-                                     help_text="If worker is a dentist check the checkbox, otherwise means that worker is dentist assistant"
-    )
+    is_dentist = models.BooleanField("Is dentist", default=False)
+    is_dentist_assistant = models.BooleanField("Is dentist assistant", default=False)
 
     class Meta:
         verbose_name = "dentist staff"
         verbose_name_plural = "dentist staffs"
 
     def __str__(self):
-        position = "dentist"
-        if not self.is_dentist:
-            position = "dentist assistant"
+        roles = []
+        if self.is_dentist: roles.append("Dentist")
+        if self.is_dentist_assistant: roles.append("Dentist Assistant")
+        roles_as_text = ", ".join(role for role in roles)
 
-        return f"{self.worker.user.get_full_name()} at position {position}"
+        return f"{self.worker.user.get_full_name()} with {roles_as_text} permissions"
+
+    def clean(self):
+        super().clean()
+
+        # check if one of the role is selected
+        if not self.is_dentist and not self.is_dentist_assistant:
+            raise ValidationError({
+                "is_dentist": "At least one of the role must be selected",
+                "is_dentist_assistant": "At least one of the role must be selected"
+            })
 
 
 class ManagementStaff(CreatedUpdatedMixin, FullCleanMixin):
@@ -97,6 +108,16 @@ class ManagementStaff(CreatedUpdatedMixin, FullCleanMixin):
         roles_as_text = ", ".join(role for role in roles)
 
         return f"{self.worker.user.get_full_name()} with {roles_as_text} permissions"
+
+    def clean(self):
+        super().clean()
+
+        # check if one of the role is selected
+        if not self.is_financial and not self.is_hr:
+            raise ValidationError({
+                "is_hr": "At least one of the role must be selected",
+                "is_financial": "At least one of the role must be selected"
+            })
 
 
 class WorkersAvailability(CreatedUpdatedMixin, FullCleanMixin):

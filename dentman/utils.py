@@ -1,5 +1,6 @@
 import re
 import os
+from datetime import date
 
 from django.db.models.fields.files import FieldFile
 from django.http.response import HttpResponseBase, FileResponse, HttpResponse
@@ -61,3 +62,11 @@ def return_file_in_response(storage_root: str, file_path: str) -> HttpResponseBa
     if os.path.exists(file_full_path):
         return FileResponse(open(file_full_path, 'rb'))
     return HttpResponse(status=404)
+
+def check_if_user_is_adult(user: Model) -> bool:
+    """
+    Function to check if user is an adult today
+    """
+    today = date.today()
+    age = today.year - user.birth_date.year - ((today.month, today.day) < (user.birth_date.month, user.birth_date.day))
+    return age >= 18
