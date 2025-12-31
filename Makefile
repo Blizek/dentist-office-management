@@ -223,7 +223,6 @@ tag:
 
 next: export CMPFILE_BODY:=$(CMPFILE_BODY)
 next:
-	uv add --dev bump-my-version
 	uv run bump-my-version bump patch
 	make $(CMPFILE)
 	make tag

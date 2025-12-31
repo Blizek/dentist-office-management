@@ -1,5 +1,4 @@
 FROM ghcr.io/astral-sh/uv:latest AS uv_bin
-
 FROM python:3.12-slim-bookworm
 
 ARG APP_UID
