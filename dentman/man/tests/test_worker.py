@@ -14,7 +14,9 @@ def test_worker_creation_with_defaults():
     user = User.objects.create_user(
         username='workeruser',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_dentist_staff=True,
+        is_dentist=True
     )
     
     worker = Worker.objects.create(user=user)
@@ -31,7 +33,9 @@ def test_worker_creation_with_custom_values():
     user = User.objects.create_user(
         username='customworker',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_dentist_staff=True,
+        is_dentist=True
     )
     
     since_date = date.today() - timedelta(days=30)
@@ -57,7 +61,9 @@ def test_worker_str_representation():
         first_name='John',
         last_name='Doe',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_dentist_staff=True,
+        is_dentist=True
     )
     
     worker = Worker.objects.create(user=user)
@@ -72,7 +78,9 @@ def test_worker_save_method_sets_inactive_when_to_when_set():
     user = User.objects.create_user(
         username='inactiveworker',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_dentist_staff=True,
+        is_dentist=True
     )
     
     worker = Worker.objects.create(user=user)
@@ -90,7 +98,9 @@ def test_worker_one_to_one_constraint():
     user = User.objects.create_user(
         username='uniqueworker',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_dentist_staff=True,
+        is_dentist=True
     )
     
     worker1 = Worker.objects.create(user=user)
@@ -105,7 +115,9 @@ def test_worker_cascade_delete():
     user = User.objects.create_user(
         username='deleteworker',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_dentist_staff=True,
+        is_dentist=True
     )
     
     worker = Worker.objects.create(user=user)
@@ -129,7 +141,9 @@ def test_worker_default_since_when():
     user = User.objects.create_user(
         username='todayworker',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_dentist_staff=True,
+        is_dentist=True
     )
     
     worker = Worker.objects.create(user=user)

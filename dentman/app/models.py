@@ -86,6 +86,17 @@ class User(AbstractUser, CreatedUpdatedMixin, FullCleanMixin):
                     "phone_number": "Invalid phone number format"
                 })
 
+        # check if both is_worker and (is_dentist_staff or is_management_staff) are selected
+        if self.is_worker and not (self.is_dentist_staff or self.is_management_staff):
+            raise ValidationError({
+                "is_dentist_staff": "Check this or 'Is management staff' checkbox",
+                "is_management_staff": "Check this or 'Is dentist staff' checkbox",
+            })
+        if (self.is_dentist_staff or self.is_management_staff) and not self.is_worker:
+            raise ValidationError({
+                "is_worker": "User is not set to be as worker",
+            })
+
         # check if both flag is_dentist_staff and (is_dentist or is_dentist_assistant) are set
         if self.is_dentist_staff and not (self.is_dentist or self.is_dentist_assistant):
             raise ValidationError({

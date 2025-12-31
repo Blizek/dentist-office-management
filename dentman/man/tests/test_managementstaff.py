@@ -12,7 +12,10 @@ def test_management_staff_creation():
     user = User.objects.create_user(
         username='manageruser',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_management_staff=True,
+        is_hr=True,
+        is_financial=True
     )
     worker = Worker.objects.create(user=user)
     
@@ -35,7 +38,10 @@ def test_management_staff_str_representation_both_roles():
         first_name='John',
         last_name='Manager',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_management_staff=True,
+        is_hr=True,
+        is_financial=True
     )
     worker = Worker.objects.create(user=user)
     
@@ -57,7 +63,10 @@ def test_management_staff_str_representation_hr_only():
         first_name='Jane',
         last_name='HR',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_management_staff=True,
+        is_hr=True,
+        is_financial=False
     )
     worker = Worker.objects.create(user=user)
     
@@ -79,7 +88,10 @@ def test_management_staff_str_representation_financial_only():
         first_name='Bob',
         last_name='Finance',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_management_staff=True,
+        is_hr=False,
+        is_financial=True
     )
     worker = Worker.objects.create(user=user)
     
@@ -94,32 +106,18 @@ def test_management_staff_str_representation_financial_only():
 
 
 @pytest.mark.django_db
-def test_management_staff_default_values():
-    """Test default values"""
-    user = User.objects.create_user(
-        username='defaultmanager',
-        password='test123',
-        is_worker=True
-    )
-    worker = Worker.objects.create(user=user)
-    
-    management_staff = ManagementStaff.objects.create(worker=worker)
-    
-    assert management_staff.is_hr is False
-    assert management_staff.is_financial is False
-
-
-@pytest.mark.django_db
 def test_management_staff_one_to_one_constraint():
     """Test that each worker can have only one management staff instance"""
     user = User.objects.create_user(
         username='uniquemanager',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_management_staff=True,
+        is_hr=True,
     )
     worker = Worker.objects.create(user=user)
     
-    management_staff1 = ManagementStaff.objects.create(worker=worker)
+    management_staff1 = ManagementStaff.objects.create(worker=worker, is_hr=True, is_financial=True)
     
     with pytest.raises(Exception):
         ManagementStaff.objects.create(worker=worker)

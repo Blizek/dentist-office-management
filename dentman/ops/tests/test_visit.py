@@ -22,6 +22,8 @@ def test_visit_creation():
     dentist = User.objects.create_user(
         username='dentist',
         password='test123',
+        is_worker=True,
+        is_dentist_staff=True,
         is_dentist=True
     )
     category = Category.objects.create(name="Dental Care")

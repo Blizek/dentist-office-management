@@ -13,6 +13,7 @@ def test_dentist_staff_creation_dentist():
         username='dentistuser',
         password='test123',
         is_worker=True,
+        is_dentist_staff=True,
         is_dentist=True
     )
     worker = Worker.objects.create(user=user)
@@ -32,32 +33,22 @@ def test_dentist_staff_creation_assistant():
     user = User.objects.create_user(
         username='assistantuser',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_dentist_staff=True,
+        is_dentist=False,
+        is_dentist_assistant=True
     )
     worker = Worker.objects.create(user=user)
     
     dentist_staff = DentistStaff.objects.create(
         worker=worker,
-        is_dentist=False
+        is_dentist=False,
+        is_dentist_assistant=True
     )
     
     assert dentist_staff.worker == worker
     assert dentist_staff.is_dentist is False
-
-
-@pytest.mark.django_db
-def test_dentist_staff_default_values():
-    """Test default values"""
-    user = User.objects.create_user(
-        username='defaultuser',
-        password='test123',
-        is_worker=True
-    )
-    worker = Worker.objects.create(user=user)
-    
-    dentist_staff = DentistStaff.objects.create(worker=worker)
-    
-    assert dentist_staff.is_dentist is False  # default value
+    assert dentist_staff.is_dentist_assistant is True
 
 
 @pytest.mark.django_db
@@ -66,12 +57,14 @@ def test_dentist_staff_one_to_one_constraint():
     user = User.objects.create_user(
         username='uniquedentist',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_dentist_staff=True,
+        is_dentist=True
     )
     worker = Worker.objects.create(user=user)
     
     # Create first dentist staff instance
-    dentist_staff1 = DentistStaff.objects.create(worker=worker)
+    dentist_staff1 = DentistStaff.objects.create(worker=worker, is_dentist=True)
     
     # Try to create second dentist staff instance for same worker
     with pytest.raises(Exception):  # Should raise IntegrityError
@@ -84,11 +77,13 @@ def test_dentist_staff_cascade_delete():
     user = User.objects.create_user(
         username='deletedentist',
         password='test123',
-        is_worker=True
+        is_worker=True,
+        is_dentist_staff=True,
+        is_dentist=True
     )
     worker = Worker.objects.create(user=user)
     
-    dentist_staff = DentistStaff.objects.create(worker=worker)
+    dentist_staff = DentistStaff.objects.create(worker=worker, is_dentist=True)
     dentist_staff_id = dentist_staff.id
     
     # Delete worker
