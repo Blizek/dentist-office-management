@@ -26,27 +26,27 @@ class WorkerAdmin(admin.ModelAdmin):
 @admin.register(DentistStaff)
 class DentistStaffAdmin(admin.ModelAdmin):
     def dentist_name(self, obj: DentistStaff) -> str:
-        role = "Dentist"
-        if not obj.is_dentist:
-            role = "Dentist Assistant"
+        role = ""
+        if obj.is_dentist: role = "Dentist"
+        if obj.is_dentist_assistant: role = "Dentist Assistant"
         return f"{role} {obj.worker.user.get_full_name()}"
     dentist_name.short_description = "Name"
 
     def dentist_role(self, obj: DentistStaff) -> str:
-        if not obj.is_dentist:
-            return "Dentist Assistant"
-        return "Dentist"
+        if obj.is_dentist: return "Dentist"
+        if obj.is_dentist_assistant: return "Dentist Assistant"
+        return ""
     dentist_role.short_description = "Role"
 
     list_display = ("dentist_name", "worker", "dentist_role")
-    list_filter = ("is_dentist", )
+    list_filter = ("is_dentist", "is_dentist_assistant")
     search_fields = ("worker__user__first_name", "worker__user__last_name")
     fieldsets = [
         ('', {
             'fields': ['worker', ],
         }),
         ('Roles', {
-            'fields': ('is_dentist', )
+            'fields': ('is_dentist', 'is_dentist_assistant' ),
         })
     ]
 
